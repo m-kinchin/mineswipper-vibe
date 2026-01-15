@@ -1,0 +1,129 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #c0c0c0;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+#app {
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+#controls {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#controls label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#controls input {
+  width: 60px;
+  padding: 5px;
+  border: 2px inset #fff;
+}
+
+#controls button {
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #e0e0e0;
+  border: 2px outset #fff;
+}
+
+#controls button:active {
+  border: 2px inset #fff;
+}
+
+#status {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  font-weight: bold;
+}
+
+#game-status {
+  color: #333;
+}
+
+#game-status.won {
+  color: green;
+}
+
+#game-status.lost {
+  color: red;
+}
+
+#board {
+  display: inline-block;
+  border: 3px solid #808080;
+  background-color: #c0c0c0;
+}
+
+.row {
+  display: flex;
+}
+
+.cell {
+  width: 30px;
+  height: 30px;
+  border: 2px outset #fff;
+  background-color: #c0c0c0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cell:hover:not(.revealed):not(.flagged) {
+  background-color: #d0d0d0;
+}
+
+.cell.revealed {
+  border: 1px solid #808080;
+  cursor: default;
+}
+
+.cell.mine {
+  background-color: #ff0000;
+}
+
+.cell.flagged {
+  background-color: #c0c0c0;
+}
+
+.cell.flagged::after {
+  content: "🚩";
+}
+
+.cell[data-count="1"] { color: blue; }
+.cell[data-count="2"] { color: green; }
+.cell[data-count="3"] { color: red; }
+.cell[data-count="4"] { color: darkblue; }
+.cell[data-count="5"] { color: darkred; }
+.cell[data-count="6"] { color: cyan; }
+.cell[data-count="7"] { color: black; }
+.cell[data-count="8"] { color: gray; }
