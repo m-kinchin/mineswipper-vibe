@@ -145,6 +145,7 @@ export class MinesweeperGame {
     cell.isFlagged = !cell.isFlagged;
     this._flagCount += cell.isFlagged ? 1 : -1;
 
+    this.checkWin();
     return true;
   }
 
@@ -159,6 +160,7 @@ export class MinesweeperGame {
   }
 
   private checkWin(): void {
+    // Win condition 1: All safe cells revealed
     let unrevealedSafeCells = 0;
     for (let row = 0; row < this.config.rows; row++) {
       for (let col = 0; col < this.config.cols; col++) {
@@ -171,6 +173,36 @@ export class MinesweeperGame {
 
     if (unrevealedSafeCells === 0) {
       this._gameState = 'won';
+      this.revealAllCells();
+      return;
+    }
+
+    // Win condition 2: All mines correctly flagged (and only mines are flagged)
+    if (this._flagCount === this.config.mines) {
+      let allMinesFlagged = true;
+      for (let row = 0; row < this.config.rows; row++) {
+        for (let col = 0; col < this.config.cols; col++) {
+          const cell = this.board[row][col];
+          if (cell.isMine && !cell.isFlagged) {
+            allMinesFlagged = false;
+            break;
+          }
+        }
+        if (!allMinesFlagged) break;
+      }
+
+      if (allMinesFlagged) {
+        this._gameState = 'won';
+        this.revealAllCells();
+      }
+    }
+  }
+
+  private revealAllCells(): void {
+    for (let row = 0; row < this.config.rows; row++) {
+      for (let col = 0; col < this.config.cols; col++) {
+        this.board[row][col].isRevealed = true;
+      }
     }
   }
 

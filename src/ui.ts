@@ -1,5 +1,16 @@
 import { MinesweeperGame } from './game';
-import { Cell } from './types';
+import { Cell, GameConfig } from './types';
+
+interface DifficultyLevel {
+  name: string;
+  config: GameConfig;
+}
+
+const LEVELS: Record<string, DifficultyLevel> = {
+  beginner: { name: 'Beginner', config: { rows: 9, cols: 9, mines: 10 } },
+  master: { name: 'Master', config: { rows: 16, cols: 16, mines: 40 } },
+  expert: { name: 'Expert', config: { rows: 16, cols: 30, mines: 99 } },
+};
 
 export class GameUI {
   private game: MinesweeperGame;
@@ -9,6 +20,7 @@ export class GameUI {
   private timerElement: HTMLElement;
   private timerInterval: number | null = null;
   private elapsedTime: number = 0;
+  private currentLevel: string = 'beginner';
 
   constructor() {
     this.boardElement = document.getElementById('board')!;
@@ -16,29 +28,35 @@ export class GameUI {
     this.mineCountElement = document.getElementById('mine-count')!;
     this.timerElement = document.getElementById('timer')!;
 
-    this.game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
+    this.game = new MinesweeperGame(LEVELS[this.currentLevel].config);
     this.setupControls();
     this.render();
   }
 
   private setupControls(): void {
-    const newGameBtn = document.getElementById('new-game')!;
-    newGameBtn.addEventListener('click', () => this.startNewGame());
+    // Level buttons
+    Object.keys(LEVELS).forEach(level => {
+      const btn = document.getElementById(level);
+      btn?.addEventListener('click', () => this.selectLevel(level));
+    });
 
     // Prevent context menu on board
     this.boardElement.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
+  private selectLevel(level: string): void {
+    this.currentLevel = level;
+    
+    // Update active button
+    document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(level)?.classList.add('active');
+    
+    this.startNewGame();
+  }
+
   private startNewGame(): void {
-    const rows = parseInt((document.getElementById('rows') as HTMLInputElement).value) || 9;
-    const cols = parseInt((document.getElementById('cols') as HTMLInputElement).value) || 9;
-    const mines = parseInt((document.getElementById('mines') as HTMLInputElement).value) || 10;
-
-    // Validate mines count
-    const maxMines = Math.floor((rows * cols) * 0.8);
-    const validMines = Math.min(Math.max(mines, 1), maxMines);
-
-    this.game = new MinesweeperGame({ rows, cols, mines: validMines });
+    const config = LEVELS[this.currentLevel].config;
+    this.game = new MinesweeperGame(config);
     this.resetTimer();
     this.render();
   }
@@ -155,6 +173,7 @@ export class GameUI {
     this.game.toggleFlag(row, col);
     this.updateBoard();
     this.updateMineCount();
+    this.checkGameEnd();
   }
 
   private updateBoard(): void {

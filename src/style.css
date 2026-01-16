@@ -54,6 +54,15 @@ h1 {
   border: 2px inset #fff;
 }
 
+.level-btn {
+  background-color: #d0d0d0 !important;
+}
+
+.level-btn.active {
+  background-color: #a0c0ff !important;
+  border: 2px inset #fff !important;
+}
+
 #status {
   margin-bottom: 15px;
   display: flex;

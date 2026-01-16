@@ -23,3 +23,16 @@ This file tracks prompts that affected code, functionality, or documentation.
 ## 5. Fix Cloudflare Deployment - MIME Type Error
 
 > Here is what I see in devtools in chrome "Failed to load module script: Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "video/mp2t". Strict MIME type checking is enforced for module scripts per HTML spec."
+
+## 6. Add Difficulty Level Buttons
+
+> I want you to replace settings with 3 levels buttons: beginer 9x9 with 10 mines, Master 16x16 with 40 and Expert 30x16 with 99. Restart the dev app
+
+## 7. Remove New Game Button & Add Flag Win Condition
+
+> remove New game button
+> make game to complete when all flags are set and they are in correct spots, no need to wait for all squares to clear
+
+## 8. Auto-clear Board on Win
+
+> actually autoclear all unchecked quares when player wins.
