@@ -35,4 +35,4 @@ This file tracks prompts that affected code, functionality, or documentation.
 
 ## 8. Auto-clear Board on Win
 
-> actually autoclear all unchecked quares when player wins.
+> actually autoclear all unchecked squares when player wins.
