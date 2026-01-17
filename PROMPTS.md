@@ -40,3 +40,7 @@ This file tracks prompts that affected code, functionality, or documentation.
 ## 9. Add Unit Tests
 
 > Create a comprehensive test suite for the Minesweeper game using Vitest. Include unit tests for: board initialization, mine placement, reveal mechanics, flag mechanics, win conditions, chord click functionality, and edge cases. Install necessary testing dependencies and add test scripts to package.json.
+
+## 10. Green Flags on Win
+
+> not happy about all mines turnin as blown after the win. Instead let's turn those flags green once player win

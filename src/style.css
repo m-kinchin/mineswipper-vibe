@@ -128,6 +128,15 @@ h1 {
   content: "🚩";
 }
 
+.cell.correct-flag {
+  background-color: #c0c0c0;
+}
+
+.cell.correct-flag::after {
+  content: "🚩";
+  filter: hue-rotate(90deg) saturate(2);
+}
+
 .cell[data-count="1"] { color: blue; }
 .cell[data-count="2"] { color: green; }
 .cell[data-count="3"] { color: red; }

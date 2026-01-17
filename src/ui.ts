@@ -134,8 +134,13 @@ export class GameUI {
     if (cell.isRevealed) {
       element.classList.add('revealed');
       if (cell.isMine) {
-        element.classList.add('mine');
-        element.textContent = '💣';
+        // On win, show green flag instead of bomb
+        if (this.game.gameState === 'won') {
+          element.classList.add('correct-flag');
+        } else {
+          element.classList.add('mine');
+          element.textContent = '💣';
+        }
       } else if (cell.adjacentMines > 0) {
         element.textContent = cell.adjacentMines.toString();
         element.dataset.count = cell.adjacentMines.toString();
