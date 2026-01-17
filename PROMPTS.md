@@ -36,3 +36,7 @@ This file tracks prompts that affected code, functionality, or documentation.
 ## 8. Auto-clear Board on Win
 
 > actually autoclear all unchecked squares when player wins.
+
+## 9. Add Unit Tests
+
+> Create a comprehensive test suite for the Minesweeper game using Vitest. Include unit tests for: board initialization, mine placement, reveal mechanics, flag mechanics, win conditions, chord click functionality, and edge cases. Install necessary testing dependencies and add test scripts to package.json.
