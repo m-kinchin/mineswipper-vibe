@@ -400,29 +400,6 @@ h1 {
   }
 }
 
-/* Animation toggle styling */
-#animation-toggle,
-#question-mark-toggle {
-  margin-bottom: 10px;
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  font-size: 14px;
-}
-
-#animation-toggle input[type="checkbox"],
-#question-mark-toggle input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-#animation-toggle label,
-#question-mark-toggle label {
-  cursor: pointer;
-}
-
 /* Cell reveal animation - applied when animations enabled */
 [data-animations="enabled"] .cell.revealed.animate-reveal {
   animation: cellReveal 0.2s ease-out;
