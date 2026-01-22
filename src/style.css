@@ -274,6 +274,13 @@ h1 {
   filter: hue-rotate(90deg) saturate(2);
 }
 
+.cell.question-mark {
+  background-color: var(--cell-bg);
+  color: var(--text-color);
+  font-weight: bold;
+  font-size: 18px;
+}
+
 .cell[data-count="1"] { color: var(--num-1); }
 .cell[data-count="2"] { color: var(--num-2); }
 .cell[data-count="3"] { color: var(--num-3); }
@@ -394,7 +401,8 @@ h1 {
 }
 
 /* Animation toggle styling */
-#animation-toggle {
+#animation-toggle,
+#question-mark-toggle {
   margin-bottom: 10px;
   display: flex;
   gap: 8px;
@@ -403,13 +411,15 @@ h1 {
   font-size: 14px;
 }
 
-#animation-toggle input[type="checkbox"] {
+#animation-toggle input[type="checkbox"],
+#question-mark-toggle input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
 }
 
-#animation-toggle label {
+#animation-toggle label,
+#question-mark-toggle label {
   cursor: pointer;
 }
 

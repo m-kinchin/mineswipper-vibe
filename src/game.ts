@@ -50,6 +50,7 @@ export class MinesweeperGame {
           isMine: false,
           isRevealed: false,
           isFlagged: false,
+          isQuestionMark: false,
           adjacentMines: 0
         };
       }
@@ -108,6 +109,11 @@ export class MinesweeperGame {
     const cell = this.getCell(row, col);
     if (!cell || cell.isRevealed || cell.isFlagged) return false;
 
+    // Clear question mark when revealing
+    if (cell.isQuestionMark) {
+      cell.isQuestionMark = false;
+    }
+
     // First click - place mines
     if (this.firstClick) {
       this.firstClick = false;
@@ -142,8 +148,20 @@ export class MinesweeperGame {
     const cell = this.getCell(row, col);
     if (!cell || cell.isRevealed) return false;
 
-    cell.isFlagged = !cell.isFlagged;
-    this._flagCount += cell.isFlagged ? 1 : -1;
+    // Cycle: empty -> flag -> question mark -> empty
+    if (!cell.isFlagged && !cell.isQuestionMark) {
+      // empty -> flag
+      cell.isFlagged = true;
+      this._flagCount++;
+    } else if (cell.isFlagged) {
+      // flag -> question mark
+      cell.isFlagged = false;
+      this._flagCount--;
+      cell.isQuestionMark = true;
+    } else if (cell.isQuestionMark) {
+      // question mark -> empty
+      cell.isQuestionMark = false;
+    }
 
     this.checkWin();
     return true;
@@ -250,6 +268,7 @@ export class MinesweeperGame {
         isMine: cell.isMine,
         isRevealed: cell.isRevealed,
         isFlagged: cell.isFlagged,
+        isQuestionMark: cell.isQuestionMark,
         adjacentMines: cell.adjacentMines
       }))),
       gameState: this._gameState,
@@ -275,6 +294,7 @@ export class MinesweeperGame {
           isMine: savedCell.isMine,
           isRevealed: savedCell.isRevealed,
           isFlagged: savedCell.isFlagged,
+          isQuestionMark: savedCell.isQuestionMark ?? false,
           adjacentMines: savedCell.adjacentMines
         };
       }
@@ -290,6 +310,7 @@ export interface GameSaveData {
     isMine: boolean;
     isRevealed: boolean;
     isFlagged: boolean;
+    isQuestionMark?: boolean;
     adjacentMines: number;
   }[][];
   gameState: GameState;

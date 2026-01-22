@@ -4,6 +4,7 @@ export interface Cell {
   isMine: boolean;
   isRevealed: boolean;
   isFlagged: boolean;
+  isQuestionMark: boolean;
   adjacentMines: number;
 }
 
