@@ -22,41 +22,9 @@ describe('Theme Validation', () => {
   });
 });
 
-// Test animation enable/disable logic
-describe('Animation State Logic', () => {
-  function parseBoolean(value: string): boolean {
-    return value === 'true';
-  }
-
-  it('parses boolean string correctly', () => {
-    expect(parseBoolean('true')).toBe(true);
-    expect(parseBoolean('false')).toBe(false);
-    expect(parseBoolean('')).toBe(false);
-  });
-
-  it('defaults to enabled when no preference saved', () => {
-    const saved: string | null = null;
-    const enabled = saved !== null ? parseBoolean(saved) : true;
-    expect(enabled).toBe(true);
-  });
-
-  it('respects saved enabled preference', () => {
-    const saved: string | null = 'true';
-    const enabled = saved !== null ? parseBoolean(saved) : true;
-    expect(enabled).toBe(true);
-  });
-
-  it('respects saved disabled preference', () => {
-    const saved: string | null = 'false';
-    const enabled = saved !== null ? parseBoolean(saved) : true;
-    expect(enabled).toBe(false);
-  });
-});
-
 // Test localStorage mock interactions
 describe('Preference Storage', () => {
   const THEME_KEY = 'minesweeper-theme';
-  const ANIMATION_KEY = 'minesweeper-animations';
   let storage: Map<string, string>;
 
   beforeEach(() => {
@@ -76,11 +44,6 @@ describe('Preference Storage', () => {
   it('saves theme preference', () => {
     localStorage.setItem(THEME_KEY, 'dark');
     expect(localStorage.getItem(THEME_KEY)).toBe('dark');
-  });
-
-  it('saves animation preference', () => {
-    localStorage.setItem(ANIMATION_KEY, 'false');
-    expect(localStorage.getItem(ANIMATION_KEY)).toBe('false');
   });
 
   it('returns null for missing keys', () => {

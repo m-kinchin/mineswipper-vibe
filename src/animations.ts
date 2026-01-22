@@ -1,55 +1,17 @@
-const ANIMATION_STORAGE_KEY = 'minesweeper-animations';
-
 export class AnimationManager {
-  private enabled: boolean = true;
-  private checkbox: HTMLInputElement | null = null;
-
   constructor() {
-    this.checkbox = document.getElementById('animations') as HTMLInputElement;
-    this.init();
-  }
-
-  private init(): void {
-    // Load saved preference
-    const saved = localStorage.getItem(ANIMATION_STORAGE_KEY);
-    if (saved !== null) {
-      this.enabled = saved === 'true';
-    }
-
-    // Apply initial state
-    this.applyAnimationState();
-
-    // Update checkbox to match
-    if (this.checkbox) {
-      this.checkbox.checked = this.enabled;
-      this.checkbox.addEventListener('change', () => this.handleToggle());
-    }
-  }
-
-  private handleToggle(): void {
-    if (!this.checkbox) return;
-    this.enabled = this.checkbox.checked;
-    this.applyAnimationState();
-    localStorage.setItem(ANIMATION_STORAGE_KEY, String(this.enabled));
-  }
-
-  private applyAnimationState(): void {
-    if (this.enabled) {
-      document.documentElement.setAttribute('data-animations', 'enabled');
-    } else {
-      document.documentElement.removeAttribute('data-animations');
-    }
+    // Always enable animations
+    document.documentElement.setAttribute('data-animations', 'enabled');
   }
 
   public isEnabled(): boolean {
-    return this.enabled;
+    return true;
   }
 
   /**
    * Trigger reveal animation on a cell element
    */
   public animateReveal(element: HTMLElement): void {
-    if (!this.enabled) return;
     element.classList.add('animate-reveal');
     // Clean up after animation
     setTimeout(() => element.classList.remove('animate-reveal'), 200);
@@ -59,7 +21,6 @@ export class AnimationManager {
    * Trigger flag placement animation
    */
   public animateFlag(element: HTMLElement): void {
-    if (!this.enabled) return;
     element.classList.add('animate-flag');
     setTimeout(() => element.classList.remove('animate-flag'), 250);
   }
@@ -68,7 +29,6 @@ export class AnimationManager {
    * Trigger flag removal animation
    */
   public animateUnflag(element: HTMLElement): void {
-    if (!this.enabled) return;
     element.classList.add('animate-unflag');
     setTimeout(() => element.classList.remove('animate-unflag'), 150);
   }
@@ -77,7 +37,6 @@ export class AnimationManager {
    * Trigger mine explosion animation
    */
   public animateExplode(element: HTMLElement): void {
-    if (!this.enabled) return;
     element.classList.add('animate-explode');
     setTimeout(() => element.classList.remove('animate-explode'), 300);
   }
@@ -86,7 +45,6 @@ export class AnimationManager {
    * Trigger board shake animation on game loss
    */
   public animateLose(boardElement: HTMLElement): void {
-    if (!this.enabled) return;
     boardElement.classList.add('shake');
     setTimeout(() => boardElement.classList.remove('shake'), 400);
   }
@@ -95,8 +53,6 @@ export class AnimationManager {
    * Trigger win celebration animation
    */
   public animateWin(boardElement: HTMLElement, cells: NodeListOf<HTMLElement>): void {
-    if (!this.enabled) return;
-    
     // Board glow
     boardElement.classList.add('win-glow');
     setTimeout(() => boardElement.classList.remove('win-glow'), 1800);
