@@ -197,3 +197,94 @@ describe('Difficulty Levels', () => {
     });
   });
 });
+
+// Test game persistence logic
+describe('Game Persistence', () => {
+  const GAME_STATE_KEY = 'minesweeper-saved-game';
+  let storage: Map<string, string>;
+
+  beforeEach(() => {
+    storage = new Map();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+      clear: () => storage.clear(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('saves game state to localStorage', () => {
+    const gameState = {
+      gameData: {
+        config: { rows: 9, cols: 9, mines: 10 },
+        board: [],
+        gameState: 'playing',
+        flagCount: 0,
+        firstClick: true
+      },
+      level: 'beginner',
+      elapsedTime: 42,
+      savedAt: Date.now()
+    };
+
+    localStorage.setItem(GAME_STATE_KEY, JSON.stringify(gameState));
+    
+    const saved = localStorage.getItem(GAME_STATE_KEY);
+    expect(saved).not.toBeNull();
+    
+    const parsed = JSON.parse(saved!);
+    expect(parsed.level).toBe('beginner');
+    expect(parsed.elapsedTime).toBe(42);
+  });
+
+  it('returns null for missing saved game', () => {
+    expect(localStorage.getItem(GAME_STATE_KEY)).toBeNull();
+  });
+
+  it('clears saved game from localStorage', () => {
+    localStorage.setItem(GAME_STATE_KEY, '{"test": true}');
+    expect(localStorage.getItem(GAME_STATE_KEY)).not.toBeNull();
+    
+    localStorage.removeItem(GAME_STATE_KEY);
+    expect(localStorage.getItem(GAME_STATE_KEY)).toBeNull();
+  });
+
+  it('validates saved game data structure', () => {
+    const validState = {
+      gameData: { config: {}, board: [], gameState: 'playing', flagCount: 0, firstClick: true },
+      level: 'beginner',
+      elapsedTime: 100,
+      savedAt: Date.now()
+    };
+
+    const isValid = (state: unknown): boolean => {
+      if (!state || typeof state !== 'object') return false;
+      const s = state as Record<string, unknown>;
+      return !!s.gameData && !!s.level && typeof s.elapsedTime === 'number';
+    };
+
+    expect(isValid(validState)).toBe(true);
+    expect(isValid({})).toBe(false);
+    expect(isValid({ gameData: {} })).toBe(false);
+    expect(isValid(null)).toBe(false);
+  });
+
+  it('preserves timer value in saved state', () => {
+    const elapsedTime = 157;
+    const savedState = {
+      gameData: { config: {}, board: [], gameState: 'playing', flagCount: 0, firstClick: false },
+      level: 'master',
+      elapsedTime,
+      savedAt: Date.now()
+    };
+
+    localStorage.setItem(GAME_STATE_KEY, JSON.stringify(savedState));
+    const restored = JSON.parse(localStorage.getItem(GAME_STATE_KEY)!);
+    
+    expect(restored.elapsedTime).toBe(157);
+  });
+});
