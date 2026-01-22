@@ -11,10 +11,8 @@ export class AnimationManager {
   /**
    * Trigger reveal animation on a cell element
    */
-  public animateReveal(element: HTMLElement): void {
-    element.classList.add('animate-reveal');
-    // Clean up after animation
-    setTimeout(() => element.classList.remove('animate-reveal'), 200);
+  public animateReveal(_element: HTMLElement): void {
+    // Reveal animation disabled
   }
 
   /**
