@@ -1,6 +1,7 @@
 import { MinesweeperGame } from './game';
 import { Cell, GameConfig } from './types';
 import { getAnimationManager, AnimationManager } from './animations';
+import { GamePersistence } from './persistence';
 
 interface DifficultyLevel {
   name: string;
@@ -34,8 +35,53 @@ export class GameUI {
 
     this.game = new MinesweeperGame(LEVELS[this.currentLevel].config);
     this.setupControls();
+    
+    // Check for saved game and prompt to resume
+    this.checkForSavedGame();
+  }
+
+  private checkForSavedGame(): void {
+    const savedState = GamePersistence.loadGame();
+    
+    if (savedState) {
+      // Show resume prompt
+      const resume = confirm(
+        `You have a saved game (${savedState.level}, ${savedState.elapsedTime}s elapsed).\n\nWould you like to resume?`
+      );
+      
+      if (resume) {
+        this.restoreSavedGame(savedState);
+      } else {
+        GamePersistence.clearSavedGame();
+        this.render();
+        this.saveCellStates();
+      }
+    } else {
+      this.render();
+      this.saveCellStates();
+    }
+  }
+
+  private restoreSavedGame(savedState: ReturnType<typeof GamePersistence.loadGame>): void {
+    if (!savedState) return;
+
+    this.currentLevel = savedState.level;
+    this.elapsedTime = savedState.elapsedTime;
+    this.game = GamePersistence.restoreGame(savedState);
+
+    // Update active button
+    document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(this.currentLevel)?.classList.add('active');
+
+    // Render and start timer if game was in progress
     this.render();
     this.saveCellStates();
+    this.updateTimerDisplay();
+    
+    // Resume timer if game is still playing
+    if (this.game.gameState === 'playing') {
+      this.startTimer();
+    }
   }
 
   private setupControls(): void {
@@ -56,6 +102,8 @@ export class GameUI {
     document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(level)?.classList.add('active');
     
+    // Clear saved game when starting new game with different level
+    GamePersistence.clearSavedGame();
     this.startNewGame();
   }
 
@@ -65,6 +113,8 @@ export class GameUI {
     this.resetTimer();
     this.render();
     this.saveCellStates();
+    // Clear any saved game when starting fresh
+    GamePersistence.clearSavedGame();
   }
 
   private resetTimer(): void {
@@ -177,6 +227,7 @@ export class GameUI {
     this.updateBoard();
     this.animateCellChanges();
     this.checkGameEnd();
+    this.autoSave();
   }
 
   private handleRightClick(row: number, col: number): void {
@@ -200,6 +251,12 @@ export class GameUI {
     this.animateCellChanges();
     this.updateMineCount();
     this.checkGameEnd();
+    this.autoSave();
+  }
+
+  private autoSave(): void {
+    // Auto-save game state after every action
+    GamePersistence.saveGame(this.game, this.currentLevel, this.elapsedTime);
   }
 
   private updateBoard(): void {
@@ -275,6 +332,9 @@ export class GameUI {
       this.statusElement.textContent = '🎉 You Won!';
       this.statusElement.className = 'won';
       
+      // Clear saved game on win
+      GamePersistence.clearSavedGame();
+      
       // Trigger win animation
       const cells = this.boardElement.querySelectorAll('.cell') as NodeListOf<HTMLElement>;
       this.animationManager.animateWin(this.boardElement, cells);
@@ -282,6 +342,9 @@ export class GameUI {
       this.stopTimer();
       this.statusElement.textContent = '💥 Game Over!';
       this.statusElement.className = 'lost';
+      
+      // Clear saved game on loss
+      GamePersistence.clearSavedGame();
       
       // Trigger lose animation (board shake)
       this.animationManager.animateLose(this.boardElement);

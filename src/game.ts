@@ -241,4 +241,58 @@ export class MinesweeperGame {
 
     return false;
   }
+
+  // Serialize game state for persistence
+  serialize(): GameSaveData {
+    return {
+      config: this.config,
+      board: this.board.map(row => row.map(cell => ({
+        isMine: cell.isMine,
+        isRevealed: cell.isRevealed,
+        isFlagged: cell.isFlagged,
+        adjacentMines: cell.adjacentMines
+      }))),
+      gameState: this._gameState,
+      flagCount: this._flagCount,
+      firstClick: this.firstClick
+    };
+  }
+
+  // Restore game from saved state
+  static deserialize(data: GameSaveData): MinesweeperGame {
+    const game = new MinesweeperGame(data.config);
+    game._gameState = data.gameState;
+    game._flagCount = data.flagCount;
+    game.firstClick = data.firstClick;
+
+    // Restore board state
+    for (let row = 0; row < data.config.rows; row++) {
+      for (let col = 0; col < data.config.cols; col++) {
+        const savedCell = data.board[row][col];
+        game.board[row][col] = {
+          row,
+          col,
+          isMine: savedCell.isMine,
+          isRevealed: savedCell.isRevealed,
+          isFlagged: savedCell.isFlagged,
+          adjacentMines: savedCell.adjacentMines
+        };
+      }
+    }
+
+    return game;
+  }
+}
+
+export interface GameSaveData {
+  config: GameConfig;
+  board: {
+    isMine: boolean;
+    isRevealed: boolean;
+    isFlagged: boolean;
+    adjacentMines: number;
+  }[][];
+  gameState: GameState;
+  flagCount: number;
+  firstClick: boolean;
 }
