@@ -44,3 +44,7 @@ This file tracks prompts that affected code, functionality, or documentation.
 ## 10. Green Flags on Win
 
 > not happy about all mines turnin as blown after the win. Instead let's turn those flags green once player win
+
+## 11. Use Monospace Font for Cell Numbers (Issue #5)
+
+> now I want you to take issue #5 and address it. As a result I would like to see PR posted for a review
