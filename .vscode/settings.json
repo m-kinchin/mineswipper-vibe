@@ -2,6 +2,7 @@
     "chat.tools.terminal.autoApprove": {
         "npm install": true,
         "gh": true,
-        "git checkout": true
+        "git checkout": true,
+        "git pull": true
     }
 }

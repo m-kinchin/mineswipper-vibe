@@ -294,3 +294,162 @@ h1 {
   border-width: 1px;
   border-color: #808080;
 }
+
+/* ==================== ANIMATIONS ==================== */
+
+/* Animation keyframes */
+@keyframes cellReveal {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes flagPop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes flagRemove {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes mineExplode {
+  0% {
+    transform: scale(0.5);
+    background-color: var(--mine-bg);
+  }
+  50% {
+    transform: scale(1.15);
+    background-color: #ffff00;
+  }
+  100% {
+    transform: scale(1);
+    background-color: var(--mine-bg);
+  }
+}
+
+@keyframes boardShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes winGlow {
+  0% {
+    box-shadow: 0 0 5px var(--status-won);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--status-won), 0 0 30px var(--status-won);
+  }
+  100% {
+    box-shadow: 0 0 10px var(--status-won);
+  }
+}
+
+@keyframes winCellPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes confettiDrop {
+  0% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px) rotate(180deg);
+  }
+}
+
+/* Animation toggle styling */
+#animation-toggle {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+}
+
+#animation-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+#animation-toggle label {
+  cursor: pointer;
+}
+
+/* Cell reveal animation - applied when animations enabled */
+[data-animations="enabled"] .cell.revealed.animate-reveal {
+  animation: cellReveal 0.2s ease-out;
+}
+
+/* Flag placement animation */
+[data-animations="enabled"] .cell.flagged.animate-flag::after {
+  animation: flagPop 0.25s ease-out;
+}
+
+/* Flag removal - handled via JS by briefly adding class */
+[data-animations="enabled"] .cell.animate-unflag::after {
+  content: "🚩";
+  animation: flagRemove 0.15s ease-in forwards;
+}
+
+/* Mine explosion animation */
+[data-animations="enabled"] .cell.mine.animate-explode {
+  animation: mineExplode 0.3s ease-out;
+}
+
+/* Board shake on lose */
+[data-animations="enabled"] #board.shake {
+  animation: boardShake 0.4s ease-out;
+}
+
+/* Win glow effect on board */
+[data-animations="enabled"] #board.win-glow {
+  animation: winGlow 0.6s ease-in-out 3;
+}
+
+/* Win cell pulse */
+[data-animations="enabled"] .cell.win-pulse {
+  animation: winCellPulse 0.4s ease-in-out;
+}
+
+/* Correct flag celebration */
+[data-animations="enabled"] .cell.correct-flag.animate-win::after {
+  animation: confettiDrop 0.5s ease-out 0.3s;
+}
