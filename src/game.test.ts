@@ -175,7 +175,7 @@ describe('MinesweeperGame', () => {
       }
     });
 
-    it('toggling flag again removes it', () => {
+    it('toggling flag again sets question mark', () => {
       for (let row = 0; row < 9; row++) {
         for (let col = 0; col < 9; col++) {
           const cell = game.getCell(row, col);
@@ -183,6 +183,7 @@ describe('MinesweeperGame', () => {
             game.toggleFlag(row, col);
             game.toggleFlag(row, col);
             expect(game.getCell(row, col)?.isFlagged).toBe(false);
+            expect(game.getCell(row, col)?.isQuestionMark).toBe(true);
             return;
           }
         }
@@ -231,6 +232,159 @@ describe('MinesweeperGame', () => {
           if (!game.getCell(row, col)?.isRevealed) {
             const result = game.toggleFlag(row, col);
             expect(result).toBe(false);
+            return;
+          }
+        }
+      }
+    });
+  });
+
+  describe('Question Mark Mechanics', () => {
+    let game: MinesweeperGame;
+
+    beforeEach(() => {
+      game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
+      game.reveal(4, 4); // First click to initialize
+    });
+
+    it('cycles from empty to flag to question mark to empty', () => {
+      // Find an unrevealed cell
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          const cell = game.getCell(row, col);
+          if (!cell?.isRevealed) {
+            // Empty -> Flag
+            game.toggleFlag(row, col);
+            expect(game.getCell(row, col)?.isFlagged).toBe(true);
+            expect(game.getCell(row, col)?.isQuestionMark).toBe(false);
+
+            // Flag -> Question Mark
+            game.toggleFlag(row, col);
+            expect(game.getCell(row, col)?.isFlagged).toBe(false);
+            expect(game.getCell(row, col)?.isQuestionMark).toBe(true);
+
+            // Question Mark -> Empty
+            game.toggleFlag(row, col);
+            expect(game.getCell(row, col)?.isFlagged).toBe(false);
+            expect(game.getCell(row, col)?.isQuestionMark).toBe(false);
+            return;
+          }
+        }
+      }
+    });
+
+    it('question marks do not count toward flag count', () => {
+      // Find two unrevealed cells
+      const cells: Array<{row: number, col: number}> = [];
+      for (let row = 0; row < 9 && cells.length < 2; row++) {
+        for (let col = 0; col < 9 && cells.length < 2; col++) {
+          const cell = game.getCell(row, col);
+          if (!cell?.isRevealed) {
+            cells.push({row, col});
+          }
+        }
+      }
+
+      expect(game.flagCount).toBe(0);
+
+      // Flag first cell
+      game.toggleFlag(cells[0].row, cells[0].col);
+      expect(game.flagCount).toBe(1);
+
+      // Convert first cell to question mark
+      game.toggleFlag(cells[0].row, cells[0].col);
+      expect(game.flagCount).toBe(0);
+
+      // Flag second cell
+      game.toggleFlag(cells[1].row, cells[1].col);
+      expect(game.flagCount).toBe(1);
+    });
+
+    it('can reveal cells marked with question mark', () => {
+      // Find an unrevealed non-mine cell
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          const cell = game.getCell(row, col);
+          if (!cell?.isRevealed && !cell?.isMine) {
+            // Set question mark
+            game.toggleFlag(row, col); // flag
+            game.toggleFlag(row, col); // question mark
+            expect(game.getCell(row, col)?.isQuestionMark).toBe(true);
+
+            // Reveal should work
+            const result = game.reveal(row, col);
+            expect(result).toBe(true);
+            expect(game.getCell(row, col)?.isRevealed).toBe(true);
+            expect(game.getCell(row, col)?.isQuestionMark).toBe(false);
+            return;
+          }
+        }
+      }
+    });
+
+    it('cannot reveal cells marked with flag', () => {
+      // Find an unrevealed cell
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          const cell = game.getCell(row, col);
+          if (!cell?.isRevealed) {
+            game.toggleFlag(row, col);
+            expect(game.getCell(row, col)?.isFlagged).toBe(true);
+
+            // Reveal should fail
+            const result = game.reveal(row, col);
+            expect(result).toBe(false);
+            expect(game.getCell(row, col)?.isRevealed).toBe(false);
+            return;
+          }
+        }
+      }
+    });
+
+    it('question marks do not affect win condition', () => {
+      const smallGame = new MinesweeperGame({ rows: 3, cols: 3, mines: 1 });
+      smallGame.reveal(1, 1); // First click at center
+
+      // Find non-mine cells and set one as question mark
+      let questionMarkSet = false;
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          const cell = smallGame.getCell(row, col);
+          if (!cell?.isMine && !cell?.isRevealed && !questionMarkSet) {
+            smallGame.toggleFlag(row, col); // flag
+            smallGame.toggleFlag(row, col); // question mark
+            questionMarkSet = true;
+          }
+        }
+      }
+
+      // Reveal all non-mine cells (including question marked ones)
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+          const cell = smallGame.getCell(row, col);
+          if (!cell?.isMine && !cell?.isRevealed) {
+            smallGame.reveal(row, col);
+          }
+        }
+      }
+
+      expect(smallGame.gameState).toBe('won');
+    });
+
+    it('question mark state preserved in serialization', () => {
+      // Find an unrevealed cell and set question mark
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+          const cell = game.getCell(row, col);
+          if (!cell?.isRevealed) {
+            game.toggleFlag(row, col); // flag
+            game.toggleFlag(row, col); // question mark
+
+            const serialized = game.serialize();
+            const restored = MinesweeperGame.deserialize(serialized);
+
+            expect(restored.getCell(row, col)?.isQuestionMark).toBe(true);
+            expect(restored.getCell(row, col)?.isFlagged).toBe(false);
             return;
           }
         }
@@ -478,8 +632,11 @@ describe('MinesweeperGame', () => {
                 }
               }
               
-              // Unflag for next attempt
-              flaggedPositions.forEach(pos => game.toggleFlag(pos.r, pos.c));
+              // Unflag for next attempt (toggle 3 times: flag -> question mark -> empty)
+              flaggedPositions.forEach(pos => {
+                game.toggleFlag(pos.r, pos.c); // flag -> question mark
+                game.toggleFlag(pos.r, pos.c); // question mark -> empty
+              });
             }
           }
         }

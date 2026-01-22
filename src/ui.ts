@@ -24,7 +24,7 @@ export class GameUI {
   private elapsedTime: number = 0;
   private currentLevel: string = 'beginner';
   private animationManager: AnimationManager;
-  private previousCellStates: Map<string, { revealed: boolean; flagged: boolean }> = new Map();
+  private previousCellStates: Map<string, { revealed: boolean; flagged: boolean; questionMark: boolean }> = new Map();
   private resumeModal: HTMLElement;
   private pendingSavedState: ReturnType<typeof GamePersistence.loadGame> = null;
 
@@ -232,6 +232,9 @@ export class GameUI {
       }
     } else if (cell.isFlagged) {
       element.classList.add('flagged');
+    } else if (cell.isQuestionMark) {
+      element.classList.add('question-mark');
+      element.textContent = '?';
     }
   }
 
@@ -314,7 +317,8 @@ export class GameUI {
         const cell = this.game.getCell(row, col)!;
         this.previousCellStates.set(`${row}-${col}`, {
           revealed: cell.isRevealed,
-          flagged: cell.isFlagged
+          flagged: cell.isFlagged,
+          questionMark: cell.isQuestionMark
         });
       }
     }
