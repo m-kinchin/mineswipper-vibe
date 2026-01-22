@@ -1,5 +1,6 @@
 import { MinesweeperGame } from './game';
 import { Cell, GameConfig } from './types';
+import { getAnimationManager, AnimationManager } from './animations';
 
 interface DifficultyLevel {
   name: string;
@@ -21,16 +22,20 @@ export class GameUI {
   private timerInterval: number | null = null;
   private elapsedTime: number = 0;
   private currentLevel: string = 'beginner';
+  private animationManager: AnimationManager;
+  private previousCellStates: Map<string, { revealed: boolean; flagged: boolean }> = new Map();
 
   constructor() {
     this.boardElement = document.getElementById('board')!;
     this.statusElement = document.getElementById('game-status')!;
     this.mineCountElement = document.getElementById('mine-count')!;
     this.timerElement = document.getElementById('timer')!;
+    this.animationManager = getAnimationManager();
 
     this.game = new MinesweeperGame(LEVELS[this.currentLevel].config);
     this.setupControls();
     this.render();
+    this.saveCellStates();
   }
 
   private setupControls(): void {
@@ -59,6 +64,7 @@ export class GameUI {
     this.game = new MinesweeperGame(config);
     this.resetTimer();
     this.render();
+    this.saveCellStates();
   }
 
   private resetTimer(): void {
@@ -169,14 +175,29 @@ export class GameUI {
     }
 
     this.updateBoard();
+    this.animateCellChanges();
     this.checkGameEnd();
   }
 
   private handleRightClick(row: number, col: number): void {
     if (this.game.gameState !== 'playing') return;
 
+    const cell = this.game.getCell(row, col);
+    if (!cell) return;
+
+    // If removing a flag, trigger unflag animation before state change
+    if (cell.isFlagged) {
+      const element = this.boardElement.querySelector(
+        `[data-row="${row}"][data-col="${col}"]`
+      ) as HTMLElement;
+      if (element) {
+        this.animationManager.animateUnflag(element);
+      }
+    }
+
     this.game.toggleFlag(row, col);
     this.updateBoard();
+    this.animateCellChanges();
     this.updateMineCount();
     this.checkGameEnd();
   }
@@ -200,15 +221,70 @@ export class GameUI {
     this.mineCountElement.textContent = `Mines: ${remaining}`;
   }
 
+  private saveCellStates(): void {
+    this.previousCellStates.clear();
+    for (let row = 0; row < this.game.rows; row++) {
+      for (let col = 0; col < this.game.cols; col++) {
+        const cell = this.game.getCell(row, col)!;
+        this.previousCellStates.set(`${row}-${col}`, {
+          revealed: cell.isRevealed,
+          flagged: cell.isFlagged
+        });
+      }
+    }
+  }
+
+  private animateCellChanges(): void {
+    for (let row = 0; row < this.game.rows; row++) {
+      for (let col = 0; col < this.game.cols; col++) {
+        const cell = this.game.getCell(row, col)!;
+        const key = `${row}-${col}`;
+        const prevState = this.previousCellStates.get(key);
+        const element = this.boardElement.querySelector(
+          `[data-row="${row}"][data-col="${col}"]`
+        ) as HTMLElement;
+
+        if (!element || !prevState) continue;
+
+        // Check for reveal
+        if (cell.isRevealed && !prevState.revealed) {
+          if (cell.isMine && this.game.gameState === 'lost') {
+            this.animationManager.animateExplode(element);
+          } else {
+            this.animationManager.animateReveal(element);
+          }
+        }
+
+        // Check for flag added
+        if (cell.isFlagged && !prevState.flagged) {
+          this.animationManager.animateFlag(element);
+        }
+
+        // Check for flag removed (unflag animation handled differently)
+        // The unflag animation needs to run before the cell updates
+      }
+    }
+    
+    // Save new states for next comparison
+    this.saveCellStates();
+  }
+
   private checkGameEnd(): void {
     if (this.game.gameState === 'won') {
       this.stopTimer();
       this.statusElement.textContent = '🎉 You Won!';
       this.statusElement.className = 'won';
+      
+      // Trigger win animation
+      const cells = this.boardElement.querySelectorAll('.cell') as NodeListOf<HTMLElement>;
+      this.animationManager.animateWin(this.boardElement, cells);
     } else if (this.game.gameState === 'lost') {
       this.stopTimer();
       this.statusElement.textContent = '💥 Game Over!';
       this.statusElement.className = 'lost';
+      
+      // Trigger lose animation (board shake)
+      this.animationManager.animateLose(this.boardElement);
     }
   }
 }
