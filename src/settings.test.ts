@@ -24,27 +24,31 @@ describe('Theme Validation', () => {
 
 // Test animation enable/disable logic
 describe('Animation State Logic', () => {
+  function parseBoolean(value: string): boolean {
+    return value === 'true';
+  }
+
   it('parses boolean string correctly', () => {
-    expect('true' === 'true').toBe(true);
-    expect('false' === 'true').toBe(false);
-    expect('' === 'true').toBe(false);
+    expect(parseBoolean('true')).toBe(true);
+    expect(parseBoolean('false')).toBe(false);
+    expect(parseBoolean('')).toBe(false);
   });
 
   it('defaults to enabled when no preference saved', () => {
     const saved: string | null = null;
-    const enabled = saved !== null ? saved === 'true' : true;
+    const enabled = saved !== null ? parseBoolean(saved) : true;
     expect(enabled).toBe(true);
   });
 
   it('respects saved enabled preference', () => {
-    const saved = 'true';
-    const enabled = saved !== null ? saved === 'true' : true;
+    const saved: string | null = 'true';
+    const enabled = saved !== null ? parseBoolean(saved) : true;
     expect(enabled).toBe(true);
   });
 
   it('respects saved disabled preference', () => {
-    const saved = 'false';
-    const enabled = saved !== null ? saved === 'true' : true;
+    const saved: string | null = 'false';
+    const enabled = saved !== null ? parseBoolean(saved) : true;
     expect(enabled).toBe(false);
   });
 });
