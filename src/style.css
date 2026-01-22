@@ -1,3 +1,91 @@
+/* Theme CSS Variables */
+:root {
+  /* Default Modern Theme */
+  --bg-color: #e8e8e8;
+  --text-color: #333;
+  --title-color: #333;
+  --board-border: #808080;
+  --cell-bg: #c0c0c0;
+  --cell-bg-hover: #d0d0d0;
+  --cell-border-out: #fff;
+  --cell-border-in: #808080;
+  --cell-revealed-bg: #d8d8d8;
+  --button-bg: #e0e0e0;
+  --button-active-bg: #a0c0ff;
+  --mine-bg: #ff0000;
+  --status-text: #333;
+  --status-won: #28a745;
+  --status-lost: #dc3545;
+  
+  /* Number colors */
+  --num-1: #0000ff;
+  --num-2: #008000;
+  --num-3: #ff0000;
+  --num-4: #000080;
+  --num-5: #800000;
+  --num-6: #008080;
+  --num-7: #000000;
+  --num-8: #808080;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg-color: #1a1a2e;
+  --text-color: #e0e0e0;
+  --title-color: #e0e0e0;
+  --board-border: #4a4a5a;
+  --cell-bg: #2d2d44;
+  --cell-bg-hover: #3d3d54;
+  --cell-border-out: #4a4a6a;
+  --cell-border-in: #1a1a2e;
+  --cell-revealed-bg: #252538;
+  --button-bg: #3d3d54;
+  --button-active-bg: #4a6fa5;
+  --mine-bg: #ff4444;
+  --status-text: #e0e0e0;
+  --status-won: #4caf50;
+  --status-lost: #f44336;
+  
+  /* Number colors - brighter for dark bg */
+  --num-1: #5c9eff;
+  --num-2: #4caf50;
+  --num-3: #ff6b6b;
+  --num-4: #7c9eff;
+  --num-5: #ff8a80;
+  --num-6: #4dd0e1;
+  --num-7: #e0e0e0;
+  --num-8: #9e9e9e;
+}
+
+/* Classic Windows 98 Theme */
+[data-theme="classic"] {
+  --bg-color: #c0c0c0;
+  --text-color: #000000;
+  --title-color: #000080;
+  --board-border: #808080;
+  --cell-bg: #c0c0c0;
+  --cell-bg-hover: #d4d4d4;
+  --cell-border-out: #ffffff;
+  --cell-border-in: #808080;
+  --cell-revealed-bg: #c0c0c0;
+  --button-bg: #c0c0c0;
+  --button-active-bg: #000080;
+  --mine-bg: #ff0000;
+  --status-text: #000000;
+  --status-won: #008000;
+  --status-lost: #ff0000;
+  
+  /* Classic minesweeper colors */
+  --num-1: #0000ff;
+  --num-2: #008000;
+  --num-3: #ff0000;
+  --num-4: #000080;
+  --num-5: #800000;
+  --num-6: #008080;
+  --num-7: #000000;
+  --num-8: #808080;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,10 +94,17 @@
 
 body {
   font-family: Arial, sans-serif;
-  background-color: #c0c0c0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
   display: flex;
   justify-content: center;
   padding: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Classic theme uses system font */
+[data-theme="classic"] body {
+  font-family: 'MS Sans Serif', 'Segoe UI', Tahoma, sans-serif;
 }
 
 #app {
@@ -18,7 +113,8 @@ body {
 
 h1 {
   margin-bottom: 20px;
-  color: #333;
+  color: var(--title-color);
+  transition: color 0.3s ease;
 }
 
 #controls {
@@ -39,28 +135,64 @@ h1 {
 #controls input {
   width: 60px;
   padding: 5px;
-  border: 2px inset #fff;
+  border: 2px inset var(--cell-border-out);
+  background-color: var(--cell-bg);
+  color: var(--text-color);
 }
 
 #controls button {
   padding: 8px 16px;
   font-size: 14px;
   cursor: pointer;
-  background-color: #e0e0e0;
-  border: 2px outset #fff;
+  background-color: var(--button-bg);
+  border: 2px outset var(--cell-border-out);
+  color: var(--text-color);
+  transition: background-color 0.2s ease;
 }
 
 #controls button:active {
-  border: 2px inset #fff;
+  border: 2px inset var(--cell-border-out);
 }
 
 .level-btn {
-  background-color: #d0d0d0 !important;
+  background-color: var(--button-bg) !important;
 }
 
 .level-btn.active {
-  background-color: #a0c0ff !important;
-  border: 2px inset #fff !important;
+  background-color: var(--button-active-bg) !important;
+  border: 2px inset var(--cell-border-out) !important;
+}
+
+/* Classic theme active button has white text */
+[data-theme="classic"] .level-btn.active {
+  color: #ffffff;
+}
+
+/* Theme selector styling */
+#theme-selector {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+
+#theme-selector label {
+  font-weight: bold;
+}
+
+#theme-selector select {
+  padding: 5px 10px;
+  font-size: 14px;
+  border: 2px inset var(--cell-border-out);
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 0;
+}
+
+[data-theme="dark"] #theme-selector select {
+  border-color: var(--cell-border-out);
 }
 
 #status {
@@ -72,21 +204,23 @@ h1 {
 }
 
 #game-status {
-  color: #333;
+  color: var(--status-text);
+  transition: color 0.3s ease;
 }
 
 #game-status.won {
-  color: green;
+  color: var(--status-won);
 }
 
 #game-status.lost {
-  color: red;
+  color: var(--status-lost);
 }
 
 #board {
   display: inline-block;
-  border: 3px solid #808080;
-  background-color: #c0c0c0;
+  border: 3px solid var(--board-border);
+  background-color: var(--cell-bg);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .row {
@@ -96,8 +230,8 @@ h1 {
 .cell {
   width: 30px;
   height: 30px;
-  border: 2px outset #fff;
-  background-color: #c0c0c0;
+  border: 2px outset var(--cell-border-out);
+  background-color: var(--cell-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -106,23 +240,25 @@ h1 {
   font-size: 14px;
   cursor: pointer;
   user-select: none;
+  transition: background-color 0.15s ease;
 }
 
 .cell:hover:not(.revealed):not(.flagged) {
-  background-color: #d0d0d0;
+  background-color: var(--cell-bg-hover);
 }
 
 .cell.revealed {
-  border: 1px solid #808080;
+  border: 1px solid var(--cell-border-in);
+  background-color: var(--cell-revealed-bg);
   cursor: default;
 }
 
 .cell.mine {
-  background-color: #ff0000;
+  background-color: var(--mine-bg);
 }
 
 .cell.flagged {
-  background-color: #c0c0c0;
+  background-color: var(--cell-bg);
 }
 
 .cell.flagged::after {
@@ -130,7 +266,7 @@ h1 {
 }
 
 .cell.correct-flag {
-  background-color: #c0c0c0;
+  background-color: var(--cell-bg);
 }
 
 .cell.correct-flag::after {
@@ -138,11 +274,23 @@ h1 {
   filter: hue-rotate(90deg) saturate(2);
 }
 
-.cell[data-count="1"] { color: blue; }
-.cell[data-count="2"] { color: green; }
-.cell[data-count="3"] { color: red; }
-.cell[data-count="4"] { color: darkblue; }
-.cell[data-count="5"] { color: darkred; }
-.cell[data-count="6"] { color: cyan; }
-.cell[data-count="7"] { color: black; }
-.cell[data-count="8"] { color: gray; }
+.cell[data-count="1"] { color: var(--num-1); }
+.cell[data-count="2"] { color: var(--num-2); }
+.cell[data-count="3"] { color: var(--num-3); }
+.cell[data-count="4"] { color: var(--num-4); }
+.cell[data-count="5"] { color: var(--num-5); }
+.cell[data-count="6"] { color: var(--num-6); }
+.cell[data-count="7"] { color: var(--num-7); }
+.cell[data-count="8"] { color: var(--num-8); }
+
+/* Classic theme specific cell styling - more beveled look */
+[data-theme="classic"] .cell {
+  border-width: 3px;
+  border-style: solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+}
+
+[data-theme="classic"] .cell.revealed {
+  border-width: 1px;
+  border-color: #808080;
+}
