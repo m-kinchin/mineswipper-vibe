@@ -11,7 +11,7 @@ export class AnimationManager {
   /**
    * Trigger reveal animation on a cell element
    */
-  public animateReveal(element: HTMLElement): void {
+  public animateReveal(_element: HTMLElement): void {
     // Reveal animation disabled
   }
 
