@@ -99,7 +99,7 @@ body {
   display: flex;
   justify-content: center;
   padding: 20px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.1s ease, color 0.1s ease;
 }
 
 /* Classic theme uses system font */
@@ -114,7 +114,7 @@ body {
 h1 {
   margin-bottom: 20px;
   color: var(--title-color);
-  transition: color 0.3s ease;
+  transition: color 0.1s ease;
 }
 
 #controls {
@@ -271,7 +271,7 @@ h1 {
 
 #game-status {
   color: var(--status-text);
-  transition: color 0.3s ease;
+  transition: color 0.1s ease;
 }
 
 #game-status.won {
@@ -286,7 +286,7 @@ h1 {
   display: inline-block;
   border: 3px solid var(--board-border);
   background-color: var(--cell-bg);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
 }
 
 .row {
@@ -306,7 +306,6 @@ h1 {
   font-size: 14px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.15s ease;
 }
 
 .cell:hover:not(.revealed):not(.flagged) {
@@ -464,11 +463,6 @@ h1 {
     opacity: 0;
     transform: translateY(20px) rotate(180deg);
   }
-}
-
-/* Cell reveal animation - applied when animations enabled */
-[data-animations="enabled"] .cell.revealed.animate-reveal {
-  animation: cellReveal 0.2s ease-out;
 }
 
 /* Flag placement animation */
