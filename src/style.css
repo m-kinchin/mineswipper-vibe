@@ -163,9 +163,9 @@ h1 {
   border: 2px inset var(--cell-border-out) !important;
 }
 
-/* Classic theme active button has white text */
+/* Classic theme active button has white text for contrast on blue background */
 [data-theme="classic"] .level-btn.active {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 /* Theme selector styling */
