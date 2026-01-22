@@ -25,40 +25,69 @@ export class GameUI {
   private currentLevel: string = 'beginner';
   private animationManager: AnimationManager;
   private previousCellStates: Map<string, { revealed: boolean; flagged: boolean }> = new Map();
+  private resumeModal: HTMLElement;
+  private pendingSavedState: ReturnType<typeof GamePersistence.loadGame> = null;
 
   constructor() {
     this.boardElement = document.getElementById('board')!;
     this.statusElement = document.getElementById('game-status')!;
     this.mineCountElement = document.getElementById('mine-count')!;
     this.timerElement = document.getElementById('timer')!;
+    this.resumeModal = document.getElementById('resume-modal')!;
     this.animationManager = getAnimationManager();
 
     this.game = new MinesweeperGame(LEVELS[this.currentLevel].config);
     this.setupControls();
+    this.setupResumeModal();
     
-    // Check for saved game and prompt to resume
-    this.checkForSavedGame();
+    // Render the initial board first
+    this.render();
+    this.saveCellStates();
+    
+    // Check for saved game after page is rendered
+    requestAnimationFrame(() => {
+      setTimeout(() => this.checkForSavedGame(), 100);
+    });
+  }
+
+  private setupResumeModal(): void {
+    const yesBtn = document.getElementById('resume-yes');
+    const noBtn = document.getElementById('resume-no');
+    
+    yesBtn?.addEventListener('click', () => {
+      this.hideResumeModal();
+      if (this.pendingSavedState) {
+        this.restoreSavedGame(this.pendingSavedState);
+        this.pendingSavedState = null;
+      }
+    });
+    
+    noBtn?.addEventListener('click', () => {
+      this.hideResumeModal();
+      GamePersistence.clearSavedGame();
+      this.pendingSavedState = null;
+    });
+  }
+
+  private showResumeModal(level: string, elapsedTime: number): void {
+    const textEl = document.getElementById('resume-modal-text');
+    if (textEl) {
+      const levelName = LEVELS[level]?.name || level;
+      textEl.textContent = `You have a saved ${levelName} game (${elapsedTime}s elapsed).`;
+    }
+    this.resumeModal.classList.remove('hidden');
+  }
+
+  private hideResumeModal(): void {
+    this.resumeModal.classList.add('hidden');
   }
 
   private checkForSavedGame(): void {
     const savedState = GamePersistence.loadGame();
     
     if (savedState) {
-      // Show resume prompt
-      const resume = confirm(
-        `You have a saved game (${savedState.level}, ${savedState.elapsedTime}s elapsed).\n\nWould you like to resume?`
-      );
-      
-      if (resume) {
-        this.restoreSavedGame(savedState);
-      } else {
-        GamePersistence.clearSavedGame();
-        this.render();
-        this.saveCellStates();
-      }
-    } else {
-      this.render();
-      this.saveCellStates();
+      this.pendingSavedState = savedState;
+      this.showResumeModal(savedState.level, savedState.elapsedTime);
     }
   }
 
