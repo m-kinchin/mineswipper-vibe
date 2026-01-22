@@ -156,6 +156,7 @@ h1 {
 
 .level-btn {
   background-color: var(--button-bg) !important;
+  width: 90px;
 }
 
 .level-btn.active {
