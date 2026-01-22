@@ -7,14 +7,8 @@
 </head>
 <body>
   <div id="app">
-    <h1>Minesweeper</h1>
-    <div id="theme-selector">
-      <label for="theme">Theme:</label>
-      <select id="theme">
-        <option value="default">Modern Light</option>
-        <option value="dark">Dark Mode</option>
-        <option value="classic">Classic Win98</option>
-      </select>
+    <div id="header">
+      <h1>Minesweeper</h1><button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
     </div>
     <div id="controls">
       <button id="beginner" class="level-btn active" title="9×9 grid, 10 mines">Beginner</button>
@@ -38,6 +32,25 @@
       <div class="modal-buttons">
         <button id="resume-yes" class="modal-btn primary">Resume</button>
         <button id="resume-no" class="modal-btn">New Game</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content settings-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="settings-close" class="close-btn" title="Close">✕</button>
+      </div>
+      <div class="settings-section">
+        <label for="theme">Theme:</label>
+        <select id="theme">
+          <option value="default">Modern Light</option>
+          <option value="dark">Dark Mode</option>
+          <option value="classic">Classic Win98</option>
+        </select>
       </div>
     </div>
   </div>
