@@ -294,8 +294,8 @@ h1 {
 }
 
 .cell {
-  width: 30px;
-  height: 30px;
+  width: var(--cell-size, 30px);
+  height: var(--cell-size, 30px);
   border: 2px outset var(--cell-border-out);
   background-color: var(--cell-bg);
   display: flex;
@@ -303,9 +303,64 @@ h1 {
   justify-content: center;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-weight: bold;
-  font-size: 14px;
+  font-size: var(--cell-font-size, 14px);
   cursor: pointer;
   user-select: none;
+}
+
+/* Cell size variants */
+[data-cell-size="small"] {
+  --cell-size: 30px;
+  --cell-font-size: 14px;
+}
+
+[data-cell-size="medium"] {
+  --cell-size: 40px;
+  --cell-font-size: 18px;
+}
+
+[data-cell-size="large"] {
+  --cell-size: 50px;
+  --cell-font-size: 24px;
+}
+
+/* Size selector buttons */
+.size-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.size-btn {
+  border: none;
+  background: none;
+  color: var(--text-color);
+  cursor: pointer;
+  font-family: serif;
+  font-weight: bold;
+  padding: 2px 4px;
+  opacity: 0.5;
+}
+
+.size-btn[data-size="small"] {
+  font-size: 20px;
+}
+
+.size-btn[data-size="medium"] {
+  font-size: 28px;
+}
+
+.size-btn[data-size="large"] {
+  font-size: 36px;
+}
+
+.size-btn.active {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.size-btn:hover:not(.active) {
+  opacity: 0.8;
 }
 
 .cell:hover:not(.revealed):not(.flagged) {
