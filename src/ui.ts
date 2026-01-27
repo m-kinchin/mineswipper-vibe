@@ -12,7 +12,16 @@ const LEVELS: Record<string, DifficultyLevel> = {
   beginner: { name: 'Beginner', config: { rows: 9, cols: 9, mines: 10 } },
   master: { name: 'Master', config: { rows: 16, cols: 16, mines: 40 } },
   expert: { name: 'Expert', config: { rows: 16, cols: 30, mines: 99 } },
+  custom: { name: 'Custom', config: { rows: 10, cols: 10, mines: 15 } },
 };
+
+const CUSTOM_SETTINGS_KEY = 'minesweeper-custom-settings';
+
+interface CustomSettings {
+  rows: number;
+  cols: number;
+  mines: number;
+}
 
 export class GameUI {
   private game: MinesweeperGame;
@@ -26,6 +35,7 @@ export class GameUI {
   private animationManager: AnimationManager;
   private previousCellStates: Map<string, { revealed: boolean; flagged: boolean; questionMark: boolean }> = new Map();
   private resumeModal: HTMLElement;
+  private customModal: HTMLElement;
   private pendingSavedState: ReturnType<typeof GamePersistence.loadGame> = null;
 
   constructor() {
@@ -34,11 +44,16 @@ export class GameUI {
     this.mineCountElement = document.getElementById('mine-count')!;
     this.timerElement = document.getElementById('timer')!;
     this.resumeModal = document.getElementById('resume-modal')!;
+    this.customModal = document.getElementById('custom-modal')!;
     this.animationManager = getAnimationManager();
 
+    // Load saved custom settings
+    this.loadCustomSettings();
+    
     this.game = new MinesweeperGame(LEVELS[this.currentLevel].config);
     this.setupControls();
     this.setupResumeModal();
+    this.setupCustomModal();
     
     // Render the initial board first
     this.render();
@@ -72,7 +87,12 @@ export class GameUI {
   private showResumeModal(level: string, elapsedTime: number): void {
     const textEl = document.getElementById('resume-modal-text');
     if (textEl) {
-      const levelName = LEVELS[level]?.name || level;
+      let levelName = LEVELS[level]?.name || level;
+      // For custom level, show dimensions
+      if (level === 'custom') {
+        const config = LEVELS.custom.config;
+        levelName = `Custom (${config.rows}×${config.cols}, ${config.mines} mines)`;
+      }
       textEl.textContent = `You have a saved ${levelName} game (${elapsedTime}s elapsed).`;
     }
     this.resumeModal.classList.remove('hidden');
@@ -80,6 +100,159 @@ export class GameUI {
 
   private hideResumeModal(): void {
     this.resumeModal.classList.add('hidden');
+  }
+
+  private setupCustomModal(): void {
+    const closeBtn = document.getElementById('custom-close');
+    const startBtn = document.getElementById('custom-start');
+    const cancelBtn = document.getElementById('custom-cancel');
+    const rowsInput = document.getElementById('custom-rows') as HTMLInputElement;
+    const colsInput = document.getElementById('custom-cols') as HTMLInputElement;
+    const minesInput = document.getElementById('custom-mines') as HTMLInputElement;
+    
+    // Close modal on backdrop click
+    this.customModal.querySelector('.modal-backdrop')?.addEventListener('click', () => {
+      this.hideCustomModal();
+    });
+    
+    closeBtn?.addEventListener('click', () => this.hideCustomModal());
+    cancelBtn?.addEventListener('click', () => this.hideCustomModal());
+    
+    startBtn?.addEventListener('click', () => this.startCustomGame());
+    
+    // Update mines hint when rows/cols change
+    const updateMinesHint = () => {
+      const rows = parseInt(rowsInput.value) || 5;
+      const cols = parseInt(colsInput.value) || 5;
+      const maxMines = Math.floor(rows * cols * 0.8);
+      const minesHint = document.getElementById('mines-hint');
+      if (minesHint) {
+        minesHint.textContent = `(1-${maxMines})`;
+      }
+    };
+    
+    rowsInput?.addEventListener('input', updateMinesHint);
+    colsInput?.addEventListener('input', updateMinesHint);
+    
+    // Allow Enter key to start game
+    [rowsInput, colsInput, minesInput].forEach(input => {
+      input?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          this.startCustomGame();
+        }
+      });
+    });
+  }
+
+  private showCustomModal(): void {
+    // Load saved custom settings into inputs
+    const settings = this.loadCustomSettings();
+    const rowsInput = document.getElementById('custom-rows') as HTMLInputElement;
+    const colsInput = document.getElementById('custom-cols') as HTMLInputElement;
+    const minesInput = document.getElementById('custom-mines') as HTMLInputElement;
+    
+    if (rowsInput) rowsInput.value = settings.rows.toString();
+    if (colsInput) colsInput.value = settings.cols.toString();
+    if (minesInput) minesInput.value = settings.mines.toString();
+    
+    // Update mines hint
+    const maxMines = Math.floor(settings.rows * settings.cols * 0.8);
+    const minesHint = document.getElementById('mines-hint');
+    if (minesHint) {
+      minesHint.textContent = `(1-${maxMines})`;
+    }
+    
+    // Clear any previous error
+    this.hideCustomError();
+    
+    this.customModal.classList.remove('hidden');
+  }
+
+  private hideCustomModal(): void {
+    this.customModal.classList.add('hidden');
+  }
+
+  private showCustomError(message: string): void {
+    const errorEl = document.getElementById('custom-error');
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.classList.remove('hidden');
+    }
+  }
+
+  private hideCustomError(): void {
+    const errorEl = document.getElementById('custom-error');
+    if (errorEl) {
+      errorEl.classList.add('hidden');
+    }
+  }
+
+  private validateCustomSettings(rows: number, cols: number, mines: number): string | null {
+    if (isNaN(rows) || isNaN(cols) || isNaN(mines)) {
+      return 'Please enter valid numbers';
+    }
+    if (rows < 5 || rows > 30) {
+      return 'Rows must be between 5 and 30';
+    }
+    if (cols < 5 || cols > 50) {
+      return 'Columns must be between 5 and 50';
+    }
+    if (mines < 1) {
+      return 'Must have at least 1 mine';
+    }
+    const maxMines = Math.floor(rows * cols * 0.8);
+    if (mines > maxMines) {
+      return `Mines cannot exceed ${maxMines} (80% of cells)`;
+    }
+    return null;
+  }
+
+  private startCustomGame(): void {
+    const rowsInput = document.getElementById('custom-rows') as HTMLInputElement;
+    const colsInput = document.getElementById('custom-cols') as HTMLInputElement;
+    const minesInput = document.getElementById('custom-mines') as HTMLInputElement;
+    
+    const rows = parseInt(rowsInput.value);
+    const cols = parseInt(colsInput.value);
+    const mines = parseInt(minesInput.value);
+    
+    const error = this.validateCustomSettings(rows, cols, mines);
+    if (error) {
+      this.showCustomError(error);
+      return;
+    }
+    
+    // Save custom settings
+    this.saveCustomSettings({ rows, cols, mines });
+    
+    // Update LEVELS.custom config
+    LEVELS.custom.config = { rows, cols, mines };
+    
+    this.hideCustomModal();
+    this.selectLevel('custom');
+  }
+
+  private loadCustomSettings(): CustomSettings {
+    try {
+      const saved = localStorage.getItem(CUSTOM_SETTINGS_KEY);
+      if (saved) {
+        const settings = JSON.parse(saved) as CustomSettings;
+        // Update LEVELS.custom with saved settings
+        LEVELS.custom.config = { rows: settings.rows, cols: settings.cols, mines: settings.mines };
+        return settings;
+      }
+    } catch (e) {
+      console.error('Failed to load custom settings:', e);
+    }
+    return { rows: 10, cols: 10, mines: 15 };
+  }
+
+  private saveCustomSettings(settings: CustomSettings): void {
+    try {
+      localStorage.setItem(CUSTOM_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+      console.error('Failed to save custom settings:', e);
+    }
   }
 
   private checkForSavedGame(): void {
@@ -117,7 +290,12 @@ export class GameUI {
     // Level buttons
     Object.keys(LEVELS).forEach(level => {
       const btn = document.getElementById(level);
-      btn?.addEventListener('click', () => this.selectLevel(level));
+      if (level === 'custom') {
+        // Custom opens the modal instead of starting directly
+        btn?.addEventListener('click', () => this.showCustomModal());
+      } else {
+        btn?.addEventListener('click', () => this.selectLevel(level));
+      }
     });
 
     // Prevent context menu on board

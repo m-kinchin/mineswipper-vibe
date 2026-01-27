@@ -14,6 +14,7 @@
       <button id="beginner" class="level-btn active" title="9×9 grid, 10 mines">Beginner</button>
       <button id="master" class="level-btn" title="16×16 grid, 40 mines">Master</button>
       <button id="expert" class="level-btn" title="30×16 grid, 99 mines">Expert</button>
+      <button id="custom" class="level-btn" title="Custom grid size and mines">Custom</button>
     </div>
     <div id="status">
       <span id="mine-count">Mines: 10</span>
@@ -58,6 +59,39 @@
           <button class="size-btn active" data-size="small" title="Small">A</button>
           <button class="size-btn" data-size="medium" title="Medium">A</button>
           <button class="size-btn" data-size="large" title="Large">A</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Custom Difficulty Modal -->
+  <div id="custom-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content custom-content">
+      <div class="modal-header">
+        <h2>Custom Difficulty</h2>
+        <button id="custom-close" class="close-btn" title="Close">✕</button>
+      </div>
+      <div class="custom-form">
+        <div class="custom-field">
+          <label for="custom-rows">Rows:</label>
+          <input type="number" id="custom-rows" min="5" max="30" value="10">
+          <span class="field-hint">(5-30)</span>
+        </div>
+        <div class="custom-field">
+          <label for="custom-cols">Columns:</label>
+          <input type="number" id="custom-cols" min="5" max="50" value="10">
+          <span class="field-hint">(5-50)</span>
+        </div>
+        <div class="custom-field">
+          <label for="custom-mines">Mines:</label>
+          <input type="number" id="custom-mines" min="1" value="15">
+          <span class="field-hint" id="mines-hint">(1-80)</span>
+        </div>
+        <div id="custom-error" class="custom-error hidden"></div>
+        <div class="modal-buttons">
+          <button id="custom-start" class="modal-btn primary">Start Game</button>
+          <button id="custom-cancel" class="modal-btn">Cancel</button>
         </div>
       </div>
     </div>

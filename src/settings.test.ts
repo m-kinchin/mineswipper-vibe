@@ -122,6 +122,7 @@ describe('Difficulty Levels', () => {
     beginner: { rows: 9, cols: 9, mines: 10 },
     master: { rows: 16, cols: 16, mines: 40 },
     expert: { rows: 16, cols: 30, mines: 99 },
+    custom: { rows: 10, cols: 10, mines: 15 },
   };
 
   it('beginner level has correct configuration', () => {
@@ -157,6 +158,92 @@ describe('Difficulty Levels', () => {
       const totalCells = level.rows * level.cols;
       const safeZone = 9; // 3x3 around first click
       expect(totalCells - safeZone).toBeGreaterThan(level.mines);
+    });
+  });
+
+  it('custom level has default configuration', () => {
+    expect(LEVELS.custom.rows).toBe(10);
+    expect(LEVELS.custom.cols).toBe(10);
+    expect(LEVELS.custom.mines).toBe(15);
+  });
+});
+
+// Test custom difficulty validation
+describe('Custom Difficulty Validation', () => {
+  function validateCustomSettings(rows: number, cols: number, mines: number): string | null {
+    if (isNaN(rows) || isNaN(cols) || isNaN(mines)) {
+      return 'Please enter valid numbers';
+    }
+    if (rows < 5 || rows > 30) {
+      return 'Rows must be between 5 and 30';
+    }
+    if (cols < 5 || cols > 50) {
+      return 'Columns must be between 5 and 50';
+    }
+    if (mines < 1) {
+      return 'Must have at least 1 mine';
+    }
+    const maxMines = Math.floor(rows * cols * 0.8);
+    if (mines > maxMines) {
+      return `Mines cannot exceed ${maxMines} (80% of cells)`;
+    }
+    return null;
+  }
+
+  it('accepts valid custom settings', () => {
+    expect(validateCustomSettings(10, 10, 15)).toBeNull();
+    expect(validateCustomSettings(5, 5, 1)).toBeNull();
+    expect(validateCustomSettings(30, 50, 100)).toBeNull();
+  });
+
+  it('rejects rows outside valid range', () => {
+    expect(validateCustomSettings(4, 10, 10)).toBe('Rows must be between 5 and 30');
+    expect(validateCustomSettings(31, 10, 10)).toBe('Rows must be between 5 and 30');
+  });
+
+  it('rejects columns outside valid range', () => {
+    expect(validateCustomSettings(10, 4, 10)).toBe('Columns must be between 5 and 50');
+    expect(validateCustomSettings(10, 51, 10)).toBe('Columns must be between 5 and 50');
+  });
+
+  it('rejects zero or negative mines', () => {
+    expect(validateCustomSettings(10, 10, 0)).toBe('Must have at least 1 mine');
+    expect(validateCustomSettings(10, 10, -5)).toBe('Must have at least 1 mine');
+  });
+
+  it('rejects mines exceeding 80% of cells', () => {
+    // 10x10 = 100 cells, 80% = 80 mines max
+    expect(validateCustomSettings(10, 10, 81)).toBe('Mines cannot exceed 80 (80% of cells)');
+    // 5x5 = 25 cells, 80% = 20 mines max
+    expect(validateCustomSettings(5, 5, 21)).toBe('Mines cannot exceed 20 (80% of cells)');
+  });
+
+  it('accepts mines at exactly 80% of cells', () => {
+    // 10x10 = 100 cells, 80% = 80 mines
+    expect(validateCustomSettings(10, 10, 80)).toBeNull();
+  });
+
+  it('rejects NaN values', () => {
+    expect(validateCustomSettings(NaN, 10, 10)).toBe('Please enter valid numbers');
+    expect(validateCustomSettings(10, NaN, 10)).toBe('Please enter valid numbers');
+    expect(validateCustomSettings(10, 10, NaN)).toBe('Please enter valid numbers');
+  });
+
+  it('calculates max mines correctly for various grid sizes', () => {
+    const testCases = [
+      { rows: 5, cols: 5, expectedMax: 20 },      // 25 * 0.8 = 20
+      { rows: 10, cols: 10, expectedMax: 80 },    // 100 * 0.8 = 80
+      { rows: 16, cols: 16, expectedMax: 204 },   // 256 * 0.8 = 204.8 -> 204
+      { rows: 30, cols: 50, expectedMax: 1200 },  // 1500 * 0.8 = 1200
+    ];
+
+    testCases.forEach(({ rows, cols, expectedMax }) => {
+      const maxMines = Math.floor(rows * cols * 0.8);
+      expect(maxMines).toBe(expectedMax);
+      // Should accept exactly max
+      expect(validateCustomSettings(rows, cols, expectedMax)).toBeNull();
+      // Should reject max + 1
+      expect(validateCustomSettings(rows, cols, expectedMax + 1)).not.toBeNull();
     });
   });
 });
@@ -249,5 +336,68 @@ describe('Game Persistence', () => {
     const restored = JSON.parse(localStorage.getItem(GAME_STATE_KEY)!);
     
     expect(restored.elapsedTime).toBe(157);
+  });
+});
+
+// Test custom settings persistence
+describe('Custom Settings Persistence', () => {
+  const CUSTOM_SETTINGS_KEY = 'minesweeper-custom-settings';
+  let storage: Map<string, string>;
+
+  beforeEach(() => {
+    storage = new Map();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+      clear: () => storage.clear(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('saves custom settings to localStorage', () => {
+    const settings = { rows: 20, cols: 25, mines: 100 };
+    localStorage.setItem(CUSTOM_SETTINGS_KEY, JSON.stringify(settings));
+
+    const saved = localStorage.getItem(CUSTOM_SETTINGS_KEY);
+    expect(saved).not.toBeNull();
+
+    const parsed = JSON.parse(saved!);
+    expect(parsed.rows).toBe(20);
+    expect(parsed.cols).toBe(25);
+    expect(parsed.mines).toBe(100);
+  });
+
+  it('returns null when no custom settings saved', () => {
+    expect(localStorage.getItem(CUSTOM_SETTINGS_KEY)).toBeNull();
+  });
+
+  it('overwrites previous custom settings', () => {
+    localStorage.setItem(CUSTOM_SETTINGS_KEY, JSON.stringify({ rows: 10, cols: 10, mines: 15 }));
+    localStorage.setItem(CUSTOM_SETTINGS_KEY, JSON.stringify({ rows: 20, cols: 30, mines: 50 }));
+
+    const saved = JSON.parse(localStorage.getItem(CUSTOM_SETTINGS_KEY)!);
+    expect(saved.rows).toBe(20);
+    expect(saved.cols).toBe(30);
+    expect(saved.mines).toBe(50);
+  });
+
+  it('validates custom settings structure', () => {
+    const isValidCustomSettings = (data: unknown): boolean => {
+      if (!data || typeof data !== 'object') return false;
+      const s = data as Record<string, unknown>;
+      return typeof s.rows === 'number' && 
+             typeof s.cols === 'number' && 
+             typeof s.mines === 'number';
+    };
+
+    expect(isValidCustomSettings({ rows: 10, cols: 10, mines: 15 })).toBe(true);
+    expect(isValidCustomSettings({ rows: 10, cols: 10 })).toBe(false);
+    expect(isValidCustomSettings({ rows: '10', cols: 10, mines: 15 })).toBe(false);
+    expect(isValidCustomSettings(null)).toBe(false);
+    expect(isValidCustomSettings({})).toBe(false);
   });
 });
