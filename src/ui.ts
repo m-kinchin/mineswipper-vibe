@@ -2,6 +2,7 @@ import { MinesweeperGame } from './game';
 import { Cell, GameConfig } from './types';
 import { getAnimationManager, AnimationManager } from './animations';
 import { GamePersistence } from './persistence';
+import { validateCustomSettings, getMaxMines, CustomSettings } from './validation';
 
 interface DifficultyLevel {
   name: string;
@@ -16,12 +17,6 @@ const LEVELS: Record<string, DifficultyLevel> = {
 };
 
 const CUSTOM_SETTINGS_KEY = 'minesweeper-custom-settings';
-
-interface CustomSettings {
-  rows: number;
-  cols: number;
-  mines: number;
-}
 
 export class GameUI {
   private game: MinesweeperGame;
@@ -124,7 +119,7 @@ export class GameUI {
     const updateMinesHint = () => {
       const rows = parseInt(rowsInput.value) || 5;
       const cols = parseInt(colsInput.value) || 5;
-      const maxMines = Math.floor(rows * cols * 0.8);
+      const maxMines = getMaxMines(rows, cols);
       const minesHint = document.getElementById('mines-hint');
       if (minesHint) {
         minesHint.textContent = `(1-${maxMines})`;
@@ -134,13 +129,22 @@ export class GameUI {
     rowsInput?.addEventListener('input', updateMinesHint);
     colsInput?.addEventListener('input', updateMinesHint);
     
-    // Allow Enter key to start game
+    // Allow Enter key to start game, Escape to close
     [rowsInput, colsInput, minesInput].forEach(input => {
       input?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           this.startCustomGame();
+        } else if (e.key === 'Escape') {
+          this.hideCustomModal();
         }
       });
+    });
+
+    // Global Escape key handler for modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !this.customModal.classList.contains('hidden')) {
+        this.hideCustomModal();
+      }
     });
   }
 
@@ -156,7 +160,7 @@ export class GameUI {
     if (minesInput) minesInput.value = settings.mines.toString();
     
     // Update mines hint
-    const maxMines = Math.floor(settings.rows * settings.cols * 0.8);
+    const maxMines = getMaxMines(settings.rows, settings.cols);
     const minesHint = document.getElementById('mines-hint');
     if (minesHint) {
       minesHint.textContent = `(1-${maxMines})`;
@@ -187,26 +191,6 @@ export class GameUI {
     }
   }
 
-  private validateCustomSettings(rows: number, cols: number, mines: number): string | null {
-    if (isNaN(rows) || isNaN(cols) || isNaN(mines)) {
-      return 'Please enter valid numbers';
-    }
-    if (rows < 5 || rows > 30) {
-      return 'Rows must be between 5 and 30';
-    }
-    if (cols < 5 || cols > 50) {
-      return 'Columns must be between 5 and 50';
-    }
-    if (mines < 1) {
-      return 'Must have at least 1 mine';
-    }
-    const maxMines = Math.floor(rows * cols * 0.8);
-    if (mines > maxMines) {
-      return `Mines cannot exceed ${maxMines} (80% of cells)`;
-    }
-    return null;
-  }
-
   private startCustomGame(): void {
     const rowsInput = document.getElementById('custom-rows') as HTMLInputElement;
     const colsInput = document.getElementById('custom-cols') as HTMLInputElement;
@@ -216,7 +200,7 @@ export class GameUI {
     const cols = parseInt(colsInput.value);
     const mines = parseInt(minesInput.value);
     
-    const error = this.validateCustomSettings(rows, cols, mines);
+    const error = validateCustomSettings(rows, cols, mines);
     if (error) {
       this.showCustomError(error);
       return;

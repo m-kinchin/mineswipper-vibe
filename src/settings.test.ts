@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { validateCustomSettings, getMaxMines, CUSTOM_LIMITS } from './validation';
 
 // Test theme validation logic
 describe('Theme Validation', () => {
@@ -168,28 +169,8 @@ describe('Difficulty Levels', () => {
   });
 });
 
-// Test custom difficulty validation
+// Test custom difficulty validation (uses imported validateCustomSettings)
 describe('Custom Difficulty Validation', () => {
-  function validateCustomSettings(rows: number, cols: number, mines: number): string | null {
-    if (isNaN(rows) || isNaN(cols) || isNaN(mines)) {
-      return 'Please enter valid numbers';
-    }
-    if (rows < 5 || rows > 30) {
-      return 'Rows must be between 5 and 30';
-    }
-    if (cols < 5 || cols > 50) {
-      return 'Columns must be between 5 and 50';
-    }
-    if (mines < 1) {
-      return 'Must have at least 1 mine';
-    }
-    const maxMines = Math.floor(rows * cols * 0.8);
-    if (mines > maxMines) {
-      return `Mines cannot exceed ${maxMines} (80% of cells)`;
-    }
-    return null;
-  }
-
   it('accepts valid custom settings', () => {
     expect(validateCustomSettings(10, 10, 15)).toBeNull();
     expect(validateCustomSettings(5, 5, 1)).toBeNull();
@@ -197,13 +178,13 @@ describe('Custom Difficulty Validation', () => {
   });
 
   it('rejects rows outside valid range', () => {
-    expect(validateCustomSettings(4, 10, 10)).toBe('Rows must be between 5 and 30');
-    expect(validateCustomSettings(31, 10, 10)).toBe('Rows must be between 5 and 30');
+    expect(validateCustomSettings(4, 10, 10)).toContain('Rows must be between');
+    expect(validateCustomSettings(31, 10, 10)).toContain('Rows must be between');
   });
 
   it('rejects columns outside valid range', () => {
-    expect(validateCustomSettings(10, 4, 10)).toBe('Columns must be between 5 and 50');
-    expect(validateCustomSettings(10, 51, 10)).toBe('Columns must be between 5 and 50');
+    expect(validateCustomSettings(10, 4, 10)).toContain('Columns must be between');
+    expect(validateCustomSettings(10, 51, 10)).toContain('Columns must be between');
   });
 
   it('rejects zero or negative mines', () => {
@@ -238,13 +219,20 @@ describe('Custom Difficulty Validation', () => {
     ];
 
     testCases.forEach(({ rows, cols, expectedMax }) => {
-      const maxMines = Math.floor(rows * cols * 0.8);
-      expect(maxMines).toBe(expectedMax);
+      expect(getMaxMines(rows, cols)).toBe(expectedMax);
       // Should accept exactly max
       expect(validateCustomSettings(rows, cols, expectedMax)).toBeNull();
       // Should reject max + 1
       expect(validateCustomSettings(rows, cols, expectedMax + 1)).not.toBeNull();
     });
+  });
+
+  it('uses constants from CUSTOM_LIMITS', () => {
+    expect(CUSTOM_LIMITS.rows.min).toBe(5);
+    expect(CUSTOM_LIMITS.rows.max).toBe(30);
+    expect(CUSTOM_LIMITS.cols.min).toBe(5);
+    expect(CUSTOM_LIMITS.cols.max).toBe(50);
+    expect(CUSTOM_LIMITS.minePercentage).toBe(0.8);
   });
 });
 
