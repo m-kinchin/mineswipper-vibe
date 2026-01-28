@@ -3,6 +3,7 @@ import { Cell, GameConfig } from './types';
 import { getAnimationManager, AnimationManager } from './animations';
 import { GamePersistence } from './persistence';
 import { validateCustomSettings, getMaxMines, CustomSettings } from './validation';
+import { formatTime } from './timeFormat';
 
 interface DifficultyLevel {
   name: string;
@@ -333,7 +334,7 @@ export class GameUI {
   }
 
   private updateTimerDisplay(): void {
-    this.timerElement.textContent = `Time: ${this.elapsedTime}`;
+    this.timerElement.textContent = `Time: ${formatTime(this.elapsedTime)}`;
   }
 
   private render(): void {
