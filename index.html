@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#e8e8e8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Minesweeper</title>
 </head>
 <body>
@@ -22,6 +25,35 @@
       <span id="game-status"></span>
     </div>
     <div id="board"></div>
+  </div>
+  
+  <!-- Rotate Device Modal -->
+  <div id="rotate-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content rotate-content">
+      <div class="rotate-icon">
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Tilted phone with rounded corners -->
+          <g transform="rotate(-45 40 40)">
+            <rect x="28" y="18" width="24" height="44" rx="4" ry="4" />
+            <!-- Speaker/notch -->
+            <line x1="36" y1="24" x2="44" y2="24" />
+          </g>
+          <!-- Top-left curved arrow (going clockwise: starts bottom, curves to right) -->
+          <path d="M10 28 Q10 10 28 10" fill="none" />
+          <!-- Arrowhead at end (28,10), pointing right -->
+          <polyline points="24,6 28,10 24,14" fill="none" />
+          <!-- Bottom-right curved arrow (going clockwise: starts top, curves to left) -->
+          <path d="M70 52 Q70 70 52 70" fill="none" />
+          <!-- Arrowhead at end (52,70), pointing left -->
+          <polyline points="56,66 52,70 56,74" fill="none" />
+        </svg>
+      </div>
+      <p>Please rotate your device horizontally for a better experience</p>
+      <div class="modal-buttons">
+        <button id="rotate-ok" class="modal-btn primary">OK</button>
+      </div>
+    </div>
   </div>
   
   <!-- Resume Game Modal -->
