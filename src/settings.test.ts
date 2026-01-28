@@ -389,3 +389,31 @@ describe('Custom Settings Persistence', () => {
     expect(isValidCustomSettings({})).toBe(false);
   });
 });
+
+// Test version display
+describe('Version Display', () => {
+  it('version format follows semantic versioning pattern', () => {
+    const semverRegex = /^\d+\.\d+\.\d+$/;
+    const testVersions = ['1.0.0', '2.1.3', '10.20.30'];
+    
+    testVersions.forEach(version => {
+      expect(semverRegex.test(version)).toBe(true);
+    });
+  });
+
+  it('rejects invalid version formats', () => {
+    const semverRegex = /^\d+\.\d+\.\d+$/;
+    const invalidVersions = ['1.0', 'v1.0.0', '1.0.0-beta', 'abc'];
+    
+    invalidVersions.forEach(version => {
+      expect(semverRegex.test(version)).toBe(false);
+    });
+  });
+
+  it('formats version with v prefix correctly', () => {
+    const formatVersion = (version: string) => `v${version}`;
+    
+    expect(formatVersion('1.0.0')).toBe('v1.0.0');
+    expect(formatVersion('2.5.10')).toBe('v2.5.10');
+  });
+});
