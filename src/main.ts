@@ -10,4 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initAnimationManager();
   new SettingsModal();
   new GameUI();
+  
+  // Display app version from package.json (injected by Vite)
+  const versionElement = document.getElementById('app-version');
+  if (versionElement) {
+    versionElement.textContent = `v${__APP_VERSION__}`;
+  }
 });
