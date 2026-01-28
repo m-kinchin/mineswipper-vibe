@@ -2,6 +2,10 @@
   "name": "minesweeper",
   "version": "1.0.0",
   "description": "Minesweeper game in TypeScript",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/m-kinchin/mineswipper-vibe.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -12,9 +16,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@testing-library/dom": "^10.4.1",
     "@vitest/ui": "^4.0.17",
     "jsdom": "^27.0.1",
+    "semantic-release": "^24.2.9",
     "typescript": "^5.3.3",
     "vite": "^5.0.10",
     "vitest": "^4.0.17"
