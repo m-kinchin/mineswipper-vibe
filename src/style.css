@@ -281,6 +281,104 @@ h1 {
   opacity: 0.8;
 }
 
+/* Leaderboard Modal */
+.leaderboard-content {
+  text-align: left;
+  width: 320px;
+}
+
+.leaderboard-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.leaderboard-tab {
+  flex: 1;
+  padding: 8px 4px;
+  font-size: 12px;
+  cursor: pointer;
+  background-color: var(--button-bg);
+  border: 2px outset var(--cell-border-out);
+  color: var(--text-color);
+  transition: background-color 0.15s ease;
+}
+
+.leaderboard-tab.active {
+  background-color: var(--button-active-bg);
+  border: 2px inset var(--cell-border-out);
+}
+
+[data-theme="classic"] .leaderboard-tab.active {
+  color: #ffffff;
+}
+
+.leaderboard-list {
+  min-height: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--cell-border-in);
+  gap: 12px;
+}
+
+.leaderboard-row:last-child {
+  border-bottom: none;
+}
+
+.leaderboard-row.highlight {
+  background-color: rgba(255, 215, 0, 0.2);
+}
+
+.leaderboard-rank {
+  font-weight: bold;
+  width: 24px;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.leaderboard-rank.gold { color: #b8860b; }
+.leaderboard-rank.silver { color: #808080; }
+.leaderboard-rank.bronze { color: #8b4513; }
+
+.leaderboard-time {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-weight: bold;
+  flex: 1;
+}
+
+.leaderboard-date {
+  font-size: 11px;
+  color: var(--text-color);
+  opacity: 0.6;
+}
+
+.leaderboard-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-color);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.leaderboard-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--cell-border-in);
+  text-align: center;
+}
+
+.leaderboard-footer .modal-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  min-width: auto;
+}
+
 #status {
   margin-bottom: 15px;
   display: flex;
@@ -602,7 +700,7 @@ h1 {
   position: relative;
   background-color: var(--bg-color);
   border: 3px solid var(--board-border);
-  padding: 24px 32px;
+  padding: 16px 20px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   max-width: 90%;
@@ -610,27 +708,27 @@ h1 {
 }
 
 .modal-content h2 {
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
   color: var(--title-color);
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .modal-content p {
-  margin: 0 0 20px 0;
+  margin: 0 0 14px 0;
   color: var(--text-color);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.4;
 }
 
 .modal-buttons {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
 }
 
 .modal-btn {
-  padding: 10px 20px;
-  font-size: 14px;
+  padding: 8px 16px;
+  font-size: 13px;
   cursor: pointer;
   background-color: var(--button-bg);
   border: 2px outset var(--cell-border-out);

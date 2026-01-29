@@ -3,7 +3,8 @@ import { Cell, GameConfig } from './types';
 import { getAnimationManager, AnimationManager } from './animations';
 import { GamePersistence } from './persistence';
 import { validateCustomSettings, getMaxMines, CustomSettings } from './validation';
-import { formatTime } from './timeFormat';
+import { formatTime, formatTimeWithCentiseconds } from './timeFormat';
+import { addHighScore, getHighScores, clearHighScores } from './highScores';
 
 interface DifficultyLevel {
   name: string;
@@ -55,6 +56,7 @@ export class GameUI {
     this.setupControls();
     this.setupResumeModal();
     this.setupCustomModal();
+    this.setupLeaderboardModal();
     this.setupPause();
     
     // Render the initial board first
@@ -176,7 +178,9 @@ export class GameUI {
         const config = LEVELS.custom.config;
         levelName = `Custom (${config.rows}×${config.cols}, ${config.mines} mines)`;
       }
-      textEl.textContent = `You have a saved ${levelName} game (${elapsedTime}s elapsed).`;
+      // elapsedTime is now in centiseconds
+      const seconds = Math.floor(elapsedTime / 100);
+      textEl.textContent = `You have a saved ${levelName} game (${formatTime(seconds)} elapsed).`;
     }
     this.resumeModal.classList.remove('hidden');
   }
@@ -262,6 +266,90 @@ export class GameUI {
 
   private hideCustomModal(): void {
     this.customModal.classList.add('hidden');
+  }
+
+  private setupLeaderboardModal(): void {
+    const modal = document.getElementById('leaderboard-modal')!;
+    const closeBtn = document.getElementById('leaderboard-close');
+    const openBtn = document.getElementById('leaderboard-btn');
+    const clearBtn = document.getElementById('leaderboard-clear');
+    const backdrop = modal.querySelector('.modal-backdrop');
+    
+    openBtn?.addEventListener('click', () => this.showLeaderboard(this.currentLevel));
+    closeBtn?.addEventListener('click', () => this.hideLeaderboard());
+    backdrop?.addEventListener('click', () => this.hideLeaderboard());
+    
+    clearBtn?.addEventListener('click', () => {
+      if (confirm('Clear all high scores?')) {
+        clearHighScores();
+        const activeTab = modal.querySelector('.leaderboard-tab.active') as HTMLElement;
+        const level = (activeTab?.dataset.level || 'beginner') as 'beginner' | 'master' | 'expert';
+        this.renderLeaderboard(level);
+      }
+    });
+    
+    // Tab switching
+    const tabs = modal.querySelectorAll('.leaderboard-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const level = (tab as HTMLElement).dataset.level as 'beginner' | 'master' | 'expert';
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.renderLeaderboard(level);
+      });
+    });
+    
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        this.hideLeaderboard();
+      }
+    });
+  }
+
+  private showLeaderboard(level?: string, highlightRank?: number | null): void {
+    const modal = document.getElementById('leaderboard-modal')!;
+    modal.classList.remove('hidden');
+    
+    // Set active tab
+    const activeLevel = (level === 'beginner' || level === 'master' || level === 'expert') ? level : 'beginner';
+    const tabs = modal.querySelectorAll('.leaderboard-tab');
+    tabs.forEach(tab => {
+      const tabLevel = (tab as HTMLElement).dataset.level;
+      tab.classList.toggle('active', tabLevel === activeLevel);
+    });
+    
+    this.renderLeaderboard(activeLevel as 'beginner' | 'master' | 'expert', highlightRank ?? undefined);
+  }
+
+  private hideLeaderboard(): void {
+    const modal = document.getElementById('leaderboard-modal')!;
+    modal.classList.add('hidden');
+  }
+
+  private renderLeaderboard(level: 'beginner' | 'master' | 'expert', highlightRank?: number): void {
+    const listEl = document.getElementById('leaderboard-list')!;
+    const scores = getHighScores(level);
+    
+    if (scores.length === 0) {
+      listEl.innerHTML = '<div class="leaderboard-empty">No high scores yet.<br>Win a game to set a record!</div>';
+      return;
+    }
+    
+    listEl.innerHTML = scores.map((score, index) => {
+      const rank = index + 1;
+      const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+      const highlight = highlightRank === rank ? 'highlight' : '';
+      const date = new Date(score.date).toLocaleDateString();
+      
+      return `
+        <div class="leaderboard-row ${highlight}">
+          <span class="leaderboard-rank ${rankClass}">#${rank}</span>
+          <span class="leaderboard-time">${formatTimeWithCentiseconds(score.time)}</span>
+          <span class="leaderboard-date">${date}</span>
+        </div>
+      `;
+    }).join('');
   }
 
   private showCustomError(message: string): void {
@@ -407,7 +495,7 @@ export class GameUI {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
-    this.elapsedTime = 0;
+    this.elapsedTime = 0; // Now in centiseconds
     this.updateTimerDisplay();
     this.updatePauseButton();
   }
@@ -417,7 +505,7 @@ export class GameUI {
     this.timerInterval = window.setInterval(() => {
       this.elapsedTime++;
       this.updateTimerDisplay();
-    }, 1000);
+    }, 10); // Update every 10ms (centisecond)
     this.updatePauseButton();
   }
 
@@ -430,7 +518,9 @@ export class GameUI {
   }
 
   private updateTimerDisplay(): void {
-    this.timerElement.textContent = `Time: ${formatTime(this.elapsedTime)}`;
+    // Display only seconds during gameplay (less distracting)
+    const seconds = Math.floor(this.elapsedTime / 100);
+    this.timerElement.textContent = `Time: ${formatTime(seconds)}`;
   }
 
   private render(): void {
@@ -626,6 +716,16 @@ export class GameUI {
       
       // Clear saved game on win
       GamePersistence.clearSavedGame();
+      
+      // Check for high score (only for preset difficulties)
+      if (this.currentLevel === 'beginner' || this.currentLevel === 'master' || this.currentLevel === 'expert') {
+        const rank = addHighScore(this.currentLevel as 'beginner' | 'master' | 'expert', this.elapsedTime);
+        if (rank !== null) {
+          this.statusElement.textContent = `🎉 You Won! New #${rank} High Score!`;
+          // Show leaderboard after a short delay
+          setTimeout(() => this.showLeaderboard(this.currentLevel, rank), 1500);
+        }
+      }
       
       // Trigger win animation
       const cells = this.boardElement.querySelectorAll('.cell') as NodeListOf<HTMLElement>;

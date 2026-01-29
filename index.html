@@ -8,7 +8,7 @@
 <body>
   <div id="app">
     <div id="header">
-      <h1>Minesweeper</h1><button id="pause-btn" class="icon-btn" title="Pause (P)" disabled>⏸</button><button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+      <h1>Minesweeper</h1><button id="leaderboard-btn" class="icon-btn" title="High Scores">🏆</button><button id="pause-btn" class="icon-btn" title="Pause (P)" disabled>⏸</button><button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
     </div>
     <div id="controls">
       <button id="beginner" class="level-btn active" title="9×9 grid, 10 mines">Beginner</button>
@@ -108,6 +108,28 @@
           <button id="custom-start" class="modal-btn primary">Start Game</button>
           <button id="custom-cancel" class="modal-btn">Cancel</button>
         </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Leaderboard Modal -->
+  <div id="leaderboard-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content leaderboard-content">
+      <div class="modal-header">
+        <h2>🏆 High Scores</h2>
+        <button id="leaderboard-close" class="close-btn" title="Close">✕</button>
+      </div>
+      <div class="leaderboard-tabs">
+        <button class="leaderboard-tab active" data-level="beginner">Beginner</button>
+        <button class="leaderboard-tab" data-level="master">Master</button>
+        <button class="leaderboard-tab" data-level="expert">Expert</button>
+      </div>
+      <div id="leaderboard-list" class="leaderboard-list">
+        <!-- Scores will be populated by JS -->
+      </div>
+      <div class="leaderboard-footer">
+        <button id="leaderboard-clear" class="modal-btn">Clear Scores</button>
       </div>
     </div>
   </div>
