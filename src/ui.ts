@@ -3,6 +3,8 @@ import { Cell, GameConfig } from './types';
 import { getAnimationManager, AnimationManager } from './animations';
 import { GamePersistence } from './persistence';
 import { validateCustomSettings, getMaxMines, CustomSettings } from './validation';
+import { formatTime, formatTimeWithCentiseconds } from './timeFormat';
+import { addHighScore, getHighScores, clearHighScores } from './highScores';
 
 interface DifficultyLevel {
   name: string;
@@ -41,6 +43,9 @@ export class GameUI {
   private resumeModal: HTMLElement;
   private customModal: HTMLElement;
   private pendingSavedState: ReturnType<typeof GamePersistence.loadGame> = null;
+  private isPaused: boolean = false;
+  private pauseOverlay: HTMLElement;
+  private pauseBtn: HTMLElement;
 
   constructor() {
     this.boardElement = document.getElementById('board')!;
@@ -49,6 +54,8 @@ export class GameUI {
     this.timerElement = document.getElementById('timer')!;
     this.resumeModal = document.getElementById('resume-modal')!;
     this.customModal = document.getElementById('custom-modal')!;
+    this.pauseOverlay = document.getElementById('pause-overlay')!;
+    this.pauseBtn = document.getElementById('pause-btn')!;
     this.animationManager = getAnimationManager();
 
     // Load saved custom settings
@@ -58,6 +65,8 @@ export class GameUI {
     this.setupControls();
     this.setupResumeModal();
     this.setupCustomModal();
+    this.setupLeaderboardModal();
+    this.setupPause();
     
     // Detect mobile device
     this.isMobile = this.detectMobile();
@@ -173,6 +182,87 @@ export class GameUI {
     document.documentElement.style.setProperty('--cell-font-size', `${fontSize}px`);
   }
 
+  private setupPause(): void {
+    const resumeBtn = document.getElementById('resume-btn');
+    
+    // Pause button click
+    this.pauseBtn.addEventListener('click', () => this.togglePause());
+    
+    // Resume button in overlay
+    resumeBtn?.addEventListener('click', () => this.resumeGame());
+    
+    // Click on overlay to resume
+    this.pauseOverlay.addEventListener('click', (e) => {
+      if (e.target === this.pauseOverlay) {
+        this.resumeGame();
+      }
+    });
+    
+    // Keyboard shortcut 'P' to toggle pause
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'p' && !this.isModalOpen()) {
+        this.togglePause();
+      }
+    });
+    
+    // Auto-pause on tab visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.shouldAutoPause() && this.canPause()) {
+        this.pauseGame();
+      }
+    });
+  }
+
+  private isModalOpen(): boolean {
+    const modals = document.querySelectorAll('.modal:not(.hidden)');
+    return modals.length > 0;
+  }
+
+  private shouldAutoPause(): boolean {
+    const checkbox = document.getElementById('auto-pause') as HTMLInputElement;
+    return checkbox?.checked ?? true;
+  }
+
+  private canPause(): boolean {
+    return this.game.gameState === 'playing' && this.timerInterval !== null;
+  }
+
+  private togglePause(): void {
+    if (this.isPaused) {
+      this.resumeGame();
+    } else if (this.canPause()) {
+      this.pauseGame();
+    }
+  }
+
+  private pauseGame(): void {
+    if (!this.canPause() || this.isPaused) return;
+    
+    this.isPaused = true;
+    this.stopTimer();
+    this.boardElement.classList.add('paused');
+    this.pauseOverlay.classList.remove('hidden');
+    this.pauseBtn.textContent = '▶';
+    this.pauseBtn.title = 'Resume (P)';
+  }
+
+  private resumeGame(): void {
+    if (!this.isPaused) return;
+    
+    this.isPaused = false;
+    this.startTimer();
+    this.boardElement.classList.remove('paused');
+    this.pauseOverlay.classList.add('hidden');
+    this.pauseBtn.textContent = '⏸';
+    this.pauseBtn.title = 'Pause (P)';
+  }
+
+  private updatePauseButton(): void {
+    // Enable pause button only when game is playing
+    const canPause = this.game.gameState === 'playing' && this.timerInterval !== null;
+    (this.pauseBtn as HTMLButtonElement).disabled = !canPause && !this.isPaused;
+  }
+
   private setupResumeModal(): void {
     const yesBtn = document.getElementById('resume-yes');
     const noBtn = document.getElementById('resume-no');
@@ -201,7 +291,9 @@ export class GameUI {
         const config = LEVELS.custom.config;
         levelName = `Custom (${config.rows}×${config.cols}, ${config.mines} mines)`;
       }
-      textEl.textContent = `You have a saved ${levelName} game (${elapsedTime}s elapsed).`;
+      // elapsedTime is now in centiseconds
+      const seconds = Math.floor(elapsedTime / 100);
+      textEl.textContent = `You have a saved ${levelName} game (${formatTime(seconds)} elapsed).`;
     }
     this.resumeModal.classList.remove('hidden');
   }
@@ -287,6 +379,90 @@ export class GameUI {
 
   private hideCustomModal(): void {
     this.customModal.classList.add('hidden');
+  }
+
+  private setupLeaderboardModal(): void {
+    const modal = document.getElementById('leaderboard-modal')!;
+    const closeBtn = document.getElementById('leaderboard-close');
+    const openBtn = document.getElementById('leaderboard-btn');
+    const clearBtn = document.getElementById('leaderboard-clear');
+    const backdrop = modal.querySelector('.modal-backdrop');
+    
+    openBtn?.addEventListener('click', () => this.showLeaderboard(this.currentLevel));
+    closeBtn?.addEventListener('click', () => this.hideLeaderboard());
+    backdrop?.addEventListener('click', () => this.hideLeaderboard());
+    
+    clearBtn?.addEventListener('click', () => {
+      if (confirm('Clear all high scores?')) {
+        clearHighScores();
+        const activeTab = modal.querySelector('.leaderboard-tab.active') as HTMLElement;
+        const level = (activeTab?.dataset.level || 'beginner') as 'beginner' | 'master' | 'expert';
+        this.renderLeaderboard(level);
+      }
+    });
+    
+    // Tab switching
+    const tabs = modal.querySelectorAll('.leaderboard-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const level = (tab as HTMLElement).dataset.level as 'beginner' | 'master' | 'expert';
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.renderLeaderboard(level);
+      });
+    });
+    
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        this.hideLeaderboard();
+      }
+    });
+  }
+
+  private showLeaderboard(level?: string, highlightRank?: number | null): void {
+    const modal = document.getElementById('leaderboard-modal')!;
+    modal.classList.remove('hidden');
+    
+    // Set active tab
+    const activeLevel = (level === 'beginner' || level === 'master' || level === 'expert') ? level : 'beginner';
+    const tabs = modal.querySelectorAll('.leaderboard-tab');
+    tabs.forEach(tab => {
+      const tabLevel = (tab as HTMLElement).dataset.level;
+      tab.classList.toggle('active', tabLevel === activeLevel);
+    });
+    
+    this.renderLeaderboard(activeLevel as 'beginner' | 'master' | 'expert', highlightRank ?? undefined);
+  }
+
+  private hideLeaderboard(): void {
+    const modal = document.getElementById('leaderboard-modal')!;
+    modal.classList.add('hidden');
+  }
+
+  private renderLeaderboard(level: 'beginner' | 'master' | 'expert', highlightRank?: number): void {
+    const listEl = document.getElementById('leaderboard-list')!;
+    const scores = getHighScores(level);
+    
+    if (scores.length === 0) {
+      listEl.innerHTML = '<div class="leaderboard-empty">No high scores yet.<br>Win a game to set a record!</div>';
+      return;
+    }
+    
+    listEl.innerHTML = scores.map((score, index) => {
+      const rank = index + 1;
+      const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+      const highlight = highlightRank === rank ? 'highlight' : '';
+      const date = new Date(score.date).toLocaleDateString();
+      
+      return `
+        <div class="leaderboard-row ${highlight}">
+          <span class="leaderboard-rank ${rankClass}">#${rank}</span>
+          <span class="leaderboard-time">${formatTimeWithCentiseconds(score.time)}</span>
+          <span class="leaderboard-date">${date}</span>
+        </div>
+      `;
+    }).join('');
   }
 
   private showCustomError(message: string): void {
@@ -418,10 +594,16 @@ export class GameUI {
     const config = LEVELS[this.currentLevel].config;
     this.game = new MinesweeperGame(config);
     this.resetTimer();
+    this.isPaused = false;
+    this.boardElement.classList.remove('paused');
+    this.pauseOverlay.classList.add('hidden');
+    this.pauseBtn.textContent = '⏸';
+    this.pauseBtn.title = 'Pause (P)';
     this.render();
     this.saveCellStates();
     // Clear any saved game when starting fresh
     GamePersistence.clearSavedGame();
+    this.updatePauseButton();
   }
 
   private resetTimer(): void {
@@ -429,8 +611,9 @@ export class GameUI {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
-    this.elapsedTime = 0;
+    this.elapsedTime = 0; // Now in centiseconds
     this.updateTimerDisplay();
+    this.updatePauseButton();
   }
 
   private startTimer(): void {
@@ -438,7 +621,8 @@ export class GameUI {
     this.timerInterval = window.setInterval(() => {
       this.elapsedTime++;
       this.updateTimerDisplay();
-    }, 1000);
+    }, 10); // Update every 10ms (centisecond)
+    this.updatePauseButton();
   }
 
   private stopTimer(): void {
@@ -446,10 +630,13 @@ export class GameUI {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
+    this.updatePauseButton();
   }
 
   private updateTimerDisplay(): void {
-    this.timerElement.textContent = `Time: ${this.elapsedTime}`;
+    // Display only seconds during gameplay (less distracting)
+    const seconds = Math.floor(this.elapsedTime / 100);
+    this.timerElement.textContent = `Time: ${formatTime(seconds)}`;
   }
 
   private render(): void {
@@ -704,6 +891,16 @@ export class GameUI {
       
       // Clear saved game on win
       GamePersistence.clearSavedGame();
+      
+      // Check for high score (only for preset difficulties)
+      if (this.currentLevel === 'beginner' || this.currentLevel === 'master' || this.currentLevel === 'expert') {
+        const rank = addHighScore(this.currentLevel as 'beginner' | 'master' | 'expert', this.elapsedTime);
+        if (rank !== null) {
+          this.statusElement.textContent = `🎉 You Won! New #${rank} High Score!`;
+          // Show leaderboard after a short delay
+          setTimeout(() => this.showLeaderboard(this.currentLevel, rank), 1500);
+        }
+      }
       
       // Trigger win animation
       const cells = this.boardElement.querySelectorAll('.cell') as NodeListOf<HTMLElement>;
