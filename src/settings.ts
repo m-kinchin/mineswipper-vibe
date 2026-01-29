@@ -1,6 +1,7 @@
 export type CellSize = 'small' | 'medium' | 'large';
 
 const CELL_SIZE_STORAGE_KEY = 'minesweeper-cell-size';
+const AUTO_PAUSE_STORAGE_KEY = 'minesweeper-auto-pause';
 
 export class SettingsModal {
   private modal: HTMLElement;
@@ -8,6 +9,7 @@ export class SettingsModal {
   private closeBtn: HTMLElement;
   private backdrop: HTMLElement;
   private sizeButtons: NodeListOf<HTMLButtonElement>;
+  private autoPauseCheckbox: HTMLInputElement;
 
   constructor() {
     this.modal = document.getElementById('settings-modal')!;
@@ -15,8 +17,10 @@ export class SettingsModal {
     this.closeBtn = document.getElementById('settings-close')!;
     this.backdrop = this.modal.querySelector('.modal-backdrop')!;
     this.sizeButtons = this.modal.querySelectorAll('.size-btn');
+    this.autoPauseCheckbox = document.getElementById('auto-pause') as HTMLInputElement;
 
     this.initCellSize();
+    this.initAutoPause();
     this.setupEventListeners();
   }
 
@@ -24,6 +28,13 @@ export class SettingsModal {
     const savedSize = this.getSavedCellSize() || 'small';
     this.applyCellSize(savedSize);
     this.updateSizeButtons(savedSize);
+  }
+
+  private initAutoPause(): void {
+    const saved = localStorage.getItem(AUTO_PAUSE_STORAGE_KEY);
+    // Default to true (checked) if not set
+    const isEnabled = saved === null ? true : saved === 'true';
+    this.autoPauseCheckbox.checked = isEnabled;
   }
 
   private getSavedCellSize(): CellSize | null {
@@ -71,6 +82,11 @@ export class SettingsModal {
         this.applyCellSize(size);
         this.updateSizeButtons(size);
       });
+    });
+
+    // Auto-pause checkbox
+    this.autoPauseCheckbox.addEventListener('change', () => {
+      localStorage.setItem(AUTO_PAUSE_STORAGE_KEY, String(this.autoPauseCheckbox.checked));
     });
   }
 
