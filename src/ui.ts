@@ -275,7 +275,7 @@ export class GameUI {
     const clearBtn = document.getElementById('leaderboard-clear');
     const backdrop = modal.querySelector('.modal-backdrop');
     
-    openBtn?.addEventListener('click', () => this.showLeaderboard());
+    openBtn?.addEventListener('click', () => this.showLeaderboard(this.currentLevel));
     closeBtn?.addEventListener('click', () => this.hideLeaderboard());
     backdrop?.addEventListener('click', () => this.hideLeaderboard());
     
