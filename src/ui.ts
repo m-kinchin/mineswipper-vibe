@@ -33,6 +33,9 @@ export class GameUI {
   private resumeModal: HTMLElement;
   private customModal: HTMLElement;
   private pendingSavedState: ReturnType<typeof GamePersistence.loadGame> = null;
+  private isPaused: boolean = false;
+  private pauseOverlay: HTMLElement;
+  private pauseBtn: HTMLElement;
 
   constructor() {
     this.boardElement = document.getElementById('board')!;
@@ -41,6 +44,8 @@ export class GameUI {
     this.timerElement = document.getElementById('timer')!;
     this.resumeModal = document.getElementById('resume-modal')!;
     this.customModal = document.getElementById('custom-modal')!;
+    this.pauseOverlay = document.getElementById('pause-overlay')!;
+    this.pauseBtn = document.getElementById('pause-btn')!;
     this.animationManager = getAnimationManager();
 
     // Load saved custom settings
@@ -50,6 +55,7 @@ export class GameUI {
     this.setupControls();
     this.setupResumeModal();
     this.setupCustomModal();
+    this.setupPause();
     
     // Render the initial board first
     this.render();
@@ -59,6 +65,87 @@ export class GameUI {
     requestAnimationFrame(() => {
       setTimeout(() => this.checkForSavedGame(), 100);
     });
+  }
+
+  private setupPause(): void {
+    const resumeBtn = document.getElementById('resume-btn');
+    
+    // Pause button click
+    this.pauseBtn.addEventListener('click', () => this.togglePause());
+    
+    // Resume button in overlay
+    resumeBtn?.addEventListener('click', () => this.resumeGame());
+    
+    // Click on overlay to resume
+    this.pauseOverlay.addEventListener('click', (e) => {
+      if (e.target === this.pauseOverlay) {
+        this.resumeGame();
+      }
+    });
+    
+    // Keyboard shortcut 'P' to toggle pause
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'p' && !this.isModalOpen()) {
+        this.togglePause();
+      }
+    });
+    
+    // Auto-pause on tab visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.shouldAutoPause() && this.canPause()) {
+        this.pauseGame();
+      }
+    });
+  }
+
+  private isModalOpen(): boolean {
+    const modals = document.querySelectorAll('.modal:not(.hidden)');
+    return modals.length > 0;
+  }
+
+  private shouldAutoPause(): boolean {
+    const checkbox = document.getElementById('auto-pause') as HTMLInputElement;
+    return checkbox?.checked ?? true;
+  }
+
+  private canPause(): boolean {
+    return this.game.gameState === 'playing' && this.timerInterval !== null;
+  }
+
+  private togglePause(): void {
+    if (this.isPaused) {
+      this.resumeGame();
+    } else if (this.canPause()) {
+      this.pauseGame();
+    }
+  }
+
+  private pauseGame(): void {
+    if (!this.canPause() || this.isPaused) return;
+    
+    this.isPaused = true;
+    this.stopTimer();
+    this.boardElement.classList.add('paused');
+    this.pauseOverlay.classList.remove('hidden');
+    this.pauseBtn.textContent = '▶';
+    this.pauseBtn.title = 'Resume (P)';
+  }
+
+  private resumeGame(): void {
+    if (!this.isPaused) return;
+    
+    this.isPaused = false;
+    this.startTimer();
+    this.boardElement.classList.remove('paused');
+    this.pauseOverlay.classList.add('hidden');
+    this.pauseBtn.textContent = '⏸';
+    this.pauseBtn.title = 'Pause (P)';
+  }
+
+  private updatePauseButton(): void {
+    // Enable pause button only when game is playing
+    const canPause = this.game.gameState === 'playing' && this.timerInterval !== null;
+    (this.pauseBtn as HTMLButtonElement).disabled = !canPause && !this.isPaused;
   }
 
   private setupResumeModal(): void {
@@ -303,10 +390,16 @@ export class GameUI {
     const config = LEVELS[this.currentLevel].config;
     this.game = new MinesweeperGame(config);
     this.resetTimer();
+    this.isPaused = false;
+    this.boardElement.classList.remove('paused');
+    this.pauseOverlay.classList.add('hidden');
+    this.pauseBtn.textContent = '⏸';
+    this.pauseBtn.title = 'Pause (P)';
     this.render();
     this.saveCellStates();
     // Clear any saved game when starting fresh
     GamePersistence.clearSavedGame();
+    this.updatePauseButton();
   }
 
   private resetTimer(): void {
@@ -316,6 +409,7 @@ export class GameUI {
     }
     this.elapsedTime = 0;
     this.updateTimerDisplay();
+    this.updatePauseButton();
   }
 
   private startTimer(): void {
@@ -324,6 +418,7 @@ export class GameUI {
       this.elapsedTime++;
       this.updateTimerDisplay();
     }, 1000);
+    this.updatePauseButton();
   }
 
   private stopTimer(): void {
@@ -331,6 +426,7 @@ export class GameUI {
       clearInterval(this.timerInterval);
       this.timerInterval = null;
     }
+    this.updatePauseButton();
   }
 
   private updateTimerDisplay(): void {
