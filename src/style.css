@@ -141,7 +141,7 @@ h1 {
 }
 
 #controls button {
-  padding: 8px 16px;
+  padding: 5px 10px;
   font-size: 14px;
   cursor: pointer;
   background-color: var(--button-bg);
@@ -156,7 +156,12 @@ h1 {
 
 .level-btn {
   background-color: var(--button-bg) !important;
-  width: 90px;
+  width: 70px;
+  min-height: 28px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .level-btn.active {
@@ -932,3 +937,221 @@ h1 {
 .settings-section label[for="auto-pause"] {
   cursor: pointer;
 }
+
+/* ==================== RESPONSIVE / MOBILE ==================== */
+
+/* Touch devices - detected via media query */
+@media (hover: none) and (pointer: coarse) {
+  .cell {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+}
+
+/* Mobile screens */
+@media (max-width: 768px) {
+  body {
+    padding: 8px;
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 16px);
+    min-height: calc(100dvh - 16px);
+  }
+
+  h1 {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  #header {
+    margin-bottom: 8px;
+  }
+
+  #controls {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .level-btn {
+    /* Same as desktop - uniform size */
+  }
+
+  #status {
+    gap: 12px;
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  /* Board container for centering - wrap the board */
+  #board {
+    display: inline-block; /* Keep original display */
+  }
+
+  /* Prevent text selection on touch */
+  .cell {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+
+  /* Modal adjustments */
+  .modal-content {
+    width: calc(100% - 32px);
+    max-width: 300px;
+    padding: 16px;
+  }
+
+  .modal-btn {
+    min-height: 40px;
+    padding: 10px 14px;
+  }
+
+  .settings-content {
+    width: 100%;
+  }
+
+  .custom-content {
+    width: 100%;
+  }
+
+  .custom-field input {
+    min-height: 40px;
+    width: 90px;
+  }
+
+  /* Icon button touch target */
+  .icon-btn {
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Size selector - hide on mobile since JS handles sizing */
+  .size-buttons {
+    display: none;
+  }
+}
+
+/* Small phones */
+@media (max-width: 400px) {
+  #status {
+    gap: 8px;
+    font-size: 12px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  body {
+    padding: 4px 8px;
+  }
+
+  #app {
+    position: relative;
+  }
+
+  /* Left side group */
+  #header {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin: 0;
+  }
+
+  #header > h1 {
+    font-size: 16px;
+    margin: 0 !important;
+    display: inline;
+  }
+
+  .icon-btn {
+    min-width: 24px;
+    min-height: 24px;
+    font-size: 14px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  #status {
+    position: absolute;
+    left: 4px;
+    top: 28px;
+    display: flex;
+    font-size: 11px;
+    gap: 8px;
+    margin: 0;
+  }
+
+  /* Right side: difficulty buttons */
+  #controls {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    display: flex;
+    gap: 3px;
+    margin: 0;
+  }
+
+  .level-btn {
+    font-size: 10px;
+    padding: 2px 4px;
+    min-height: 22px;
+    width: auto;
+    min-width: 42px;
+  }
+
+  /* Board centered with top margin to clear header */
+  #board {
+    margin-top: 50px;
+  }
+}
+
+/* Rotate device modal */
+.rotate-content {
+  text-align: center;
+  padding: 16px;
+  width: auto;
+  min-width: 200px;
+}
+
+.rotate-icon {
+  margin-bottom: 10px;
+  color: var(--text-color);
+}
+
+.rotate-icon svg {
+  width: 60px;
+  height: 60px;
+}
+
+.rotate-content p {
+  font-size: 13px;
+  margin: 0 0 12px 0;
+}
+
+.rotate-content .modal-btn {
+  min-height: 32px;
+  padding: 6px 16px;
+  font-size: 13px;
+  min-width: 60px;
+}
+
+.rotate-content p {
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.5;
+}
+
