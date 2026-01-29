@@ -59,14 +59,17 @@ export class MinesweeperGame {
 
   private placeMines(excludeRow: number, excludeCol: number): void {
     let minesPlaced = 0;
-    const maxMines = Math.min(this.config.mines, this.config.rows * this.config.cols - 9);
+    // Exclusion zone is 5x5 (25 cells) to ensure 3x3 opening area has no adjacent mines
+    const exclusionSize = 25;
+    const maxMines = Math.min(this.config.mines, this.config.rows * this.config.cols - exclusionSize);
 
     while (minesPlaced < maxMines) {
       const row = Math.floor(Math.random() * this.config.rows);
       const col = Math.floor(Math.random() * this.config.cols);
 
-      // Don't place mine on first click or adjacent cells
-      if (Math.abs(row - excludeRow) <= 1 && Math.abs(col - excludeCol) <= 1) {
+      // Don't place mine within 5x5 area around first click (distance <= 2)
+      // This ensures the 3x3 center area will have zero adjacent mines
+      if (Math.abs(row - excludeRow) <= 2 && Math.abs(col - excludeCol) <= 2) {
         continue;
       }
 

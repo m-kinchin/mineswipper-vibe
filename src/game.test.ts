@@ -58,6 +58,32 @@ describe('MinesweeperGame', () => {
       }
     });
 
+    it('first click area (3x3) has zero adjacent mines for guaranteed opening', () => {
+      const game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
+      game.reveal(4, 4); // First click at center
+
+      // The 3x3 area around first click should all have 0 adjacent mines
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const cell = game.getCell(4 + dr, 4 + dc);
+          expect(cell?.adjacentMines).toBe(0);
+        }
+      }
+    });
+
+    it('first click opens at least 3x3 area automatically', () => {
+      const game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
+      game.reveal(4, 4); // First click at center
+
+      // All cells in 3x3 area should be revealed due to cascade
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const cell = game.getCell(4 + dr, 4 + dc);
+          expect(cell?.isRevealed).toBe(true);
+        }
+      }
+    });
+
     it('calculates adjacent mine counts correctly', () => {
       const game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
       game.reveal(0, 0); // First click
@@ -678,12 +704,12 @@ describe('MinesweeperGame', () => {
     });
 
     it('cannot transition from lost to won', () => {
-      const game = new MinesweeperGame({ rows: 5, cols: 5, mines: 3 });
-      game.reveal(2, 2);
+      const game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
+      game.reveal(4, 4);
 
       // Lose by clicking a mine
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
           if (game.getCell(row, col)?.isMine) {
             game.reveal(row, col);
             break;
@@ -695,8 +721,8 @@ describe('MinesweeperGame', () => {
       expect(game.gameState).toBe('lost');
 
       // Try to flag all remaining mines
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
           if (game.getCell(row, col)?.isMine) {
             game.toggleFlag(row, col);
           }
@@ -821,13 +847,13 @@ describe('MinesweeperGame', () => {
     });
 
     it('preserves flag state after serialize/deserialize', () => {
-      const game = new MinesweeperGame({ rows: 5, cols: 5, mines: 3 });
-      game.reveal(2, 2);
+      const game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
+      game.reveal(4, 4);
       
       // Find two unrevealed cells to flag (cascade may have revealed some)
       const unrevealedCells: Array<{row: number, col: number}> = [];
-      for (let row = 0; row < 5 && unrevealedCells.length < 2; row++) {
-        for (let col = 0; col < 5 && unrevealedCells.length < 2; col++) {
+      for (let row = 0; row < 9 && unrevealedCells.length < 2; row++) {
+        for (let col = 0; col < 9 && unrevealedCells.length < 2; col++) {
           const cell = game.getCell(row, col);
           if (cell && !cell.isRevealed) {
             unrevealedCells.push({row, col});
@@ -849,8 +875,8 @@ describe('MinesweeperGame', () => {
     });
 
     it('can continue playing after restore', () => {
-      const game = new MinesweeperGame({ rows: 5, cols: 5, mines: 3 });
-      game.reveal(2, 2);
+      const game = new MinesweeperGame({ rows: 9, cols: 9, mines: 10 });
+      game.reveal(4, 4);
 
       const serialized = game.serialize();
       const restored = MinesweeperGame.deserialize(serialized);
@@ -859,8 +885,8 @@ describe('MinesweeperGame', () => {
       expect(restored.gameState).toBe('playing');
       
       // Find an unrevealed non-mine cell and reveal it
-      for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
+      for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
           const cell = restored.getCell(row, col);
           if (cell && !cell.isRevealed && !cell.isMine && !cell.isFlagged) {
             const result = restored.reveal(row, col);
