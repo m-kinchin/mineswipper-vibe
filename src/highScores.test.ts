@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { addHighScore, getHighScores, clearHighScores, loadHighScores } from './highScores';
 
 // Mock localStorage
@@ -12,7 +12,7 @@ const localStorageMock = (() => {
   };
 })();
 
-Object.defineProperty(global, 'localStorage', { value: localStorageMock });
+Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock });
 
 describe('highScores', () => {
   beforeEach(() => {

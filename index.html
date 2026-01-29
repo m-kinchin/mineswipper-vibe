@@ -8,7 +8,7 @@
 <body>
   <div id="app">
     <div id="header">
-      <h1>Minesweeper</h1><button id="leaderboard-btn" class="icon-btn" title="High Scores">🏆</button><button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
+      <h1>Minesweeper</h1><button id="leaderboard-btn" class="icon-btn" title="High Scores">🏆</button><button id="pause-btn" class="icon-btn" title="Pause (P)" disabled>⏸</button><button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
     </div>
     <div id="controls">
       <button id="beginner" class="level-btn active" title="9×9 grid, 10 mines">Beginner</button>
@@ -22,6 +22,14 @@
       <span id="game-status"></span>
     </div>
     <div id="board"></div>
+    <div id="pause-overlay" class="hidden">
+      <div class="pause-content">
+        <span class="pause-icon">⏸</span>
+        <span class="pause-text">PAUSED</span>
+        <button id="resume-btn" class="modal-btn primary">Resume</button>
+        <span class="pause-hint">Press P or click to resume</span>
+      </div>
+    </div>
   </div>
   
   <!-- Resume Game Modal -->
@@ -60,6 +68,10 @@
           <button class="size-btn" data-size="medium" title="Medium">A</button>
           <button class="size-btn" data-size="large" title="Large">A</button>
         </div>
+      </div>
+      <div class="settings-section">
+        <label for="auto-pause">Auto-pause on tab switch:</label>
+        <input type="checkbox" id="auto-pause" checked>
       </div>
       <div class="settings-version">
         <span id="app-version">v1.0.0</span>

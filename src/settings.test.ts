@@ -58,6 +58,49 @@ describe('Preference Storage', () => {
   });
 });
 
+// Test auto-pause preference storage
+describe('Auto-Pause Preference', () => {
+  const AUTO_PAUSE_KEY = 'minesweeper-auto-pause';
+  let storage: Map<string, string>;
+
+  beforeEach(() => {
+    storage = new Map();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+      clear: () => storage.clear(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('defaults to true when not set', () => {
+    const saved = localStorage.getItem(AUTO_PAUSE_KEY);
+    const isEnabled = saved === null ? true : saved === 'true';
+    expect(isEnabled).toBe(true);
+  });
+
+  it('saves auto-pause preference as true', () => {
+    localStorage.setItem(AUTO_PAUSE_KEY, 'true');
+    expect(localStorage.getItem(AUTO_PAUSE_KEY)).toBe('true');
+  });
+
+  it('saves auto-pause preference as false', () => {
+    localStorage.setItem(AUTO_PAUSE_KEY, 'false');
+    expect(localStorage.getItem(AUTO_PAUSE_KEY)).toBe('false');
+  });
+
+  it('reads saved preference correctly', () => {
+    localStorage.setItem(AUTO_PAUSE_KEY, 'false');
+    const saved = localStorage.getItem(AUTO_PAUSE_KEY);
+    const isEnabled = saved === null ? true : saved === 'true';
+    expect(isEnabled).toBe(false);
+  });
+});
+
 // Test CSS class application logic
 describe('Theme Application Logic', () => {
   it('default theme should remove data-theme attribute', () => {
