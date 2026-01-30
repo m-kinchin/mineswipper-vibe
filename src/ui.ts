@@ -28,6 +28,15 @@ export class GameUI {
   private timerElement: HTMLElement;
   private timerInterval: number | null = null;
   private elapsedTime: number = 0;
+  
+  // Touch support for long press
+  private touchTimer: number | null = null;
+  private touchStartPos: { x: number; y: number } | null = null;
+  
+  // Mobile auto-scaling
+  private isMobile: boolean = false;
+  private resizeHandler: (() => void) | null = null;
+  private rotateDismissed: boolean = false;
   private currentLevel: string = 'beginner';
   private animationManager: AnimationManager;
   private previousCellStates: Map<string, { revealed: boolean; flagged: boolean; questionMark: boolean }> = new Map();
@@ -59,6 +68,14 @@ export class GameUI {
     this.setupLeaderboardModal();
     this.setupPause();
     
+    // Detect mobile device
+    this.isMobile = this.detectMobile();
+    
+    // Setup resize handler for mobile scaling
+    this.resizeHandler = () => this.handleResize();
+    window.addEventListener('resize', this.resizeHandler);
+    window.addEventListener('orientationchange', this.resizeHandler);
+    
     // Render the initial board first
     this.render();
     this.saveCellStates();
@@ -67,6 +84,102 @@ export class GameUI {
     requestAnimationFrame(() => {
       setTimeout(() => this.checkForSavedGame(), 100);
     });
+  }
+  
+  private detectMobile(): boolean {
+    // Use media query for touch devices
+    return window.matchMedia('(hover: none) and (pointer: coarse)').matches ||
+           window.matchMedia('(max-width: 768px)').matches;
+  }
+  
+  private handleResize(): void {
+    this.isMobile = this.detectMobile();
+    if (this.isMobile) {
+      this.autoScaleBoard();
+      this.checkRotateModal();
+    } else {
+      // Reset to CSS-controlled size on desktop
+      document.documentElement.style.removeProperty('--cell-size');
+      document.documentElement.style.removeProperty('--cell-font-size');
+      this.hideRotateModal();
+    }
+  }
+  
+  private checkRotateModal(): void {
+    if (!this.isMobile || this.rotateDismissed) return;
+    
+    // Calculate board width based on columns and current cell size
+    const cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')) || 30;
+    const boardWidth = this.game.cols * cellSize + 10; // +10 for borders
+    const viewportWidth = window.innerWidth;
+    
+    // If board is wider than viewport, suggest rotation
+    if (boardWidth > viewportWidth) {
+      this.showRotateModal();
+    } else {
+      this.hideRotateModal();
+    }
+  }
+  
+  private showRotateModal(): void {
+    const modal = document.getElementById('rotate-modal');
+    modal?.classList.remove('hidden');
+    
+    // Setup OK button handler if not already done
+    const okBtn = document.getElementById('rotate-ok');
+    if (okBtn && !okBtn.dataset.bound) {
+      okBtn.dataset.bound = 'true';
+      okBtn.addEventListener('click', () => {
+        this.rotateDismissed = true;
+        this.hideRotateModal();
+      });
+    }
+  }
+  
+  private hideRotateModal(): void {
+    const modal = document.getElementById('rotate-modal');
+    modal?.classList.add('hidden');
+  }
+  
+  private autoScaleBoard(): void {
+    if (!this.isMobile) return;
+    
+    const headerEl = document.getElementById('header');
+    const controlsEl = document.getElementById('controls');
+    const statusEl = document.getElementById('status');
+    
+    // Calculate available space
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Get heights of fixed elements (with fallbacks)
+    const headerHeight = headerEl?.offsetHeight || 50;
+    const controlsHeight = controlsEl?.offsetHeight || 50;
+    const statusHeight = statusEl?.offsetHeight || 30;
+    const padding = 40; // Top/bottom padding and board border
+    
+    const availableHeight = viewportHeight - headerHeight - controlsHeight - statusHeight - padding;
+    const availableWidth = viewportWidth - 20; // Side padding
+    
+    // Calculate cell size based on grid dimensions
+    const rows = this.game.rows;
+    const cols = this.game.cols;
+    
+    const maxCellHeight = Math.floor(availableHeight / rows);
+    const maxCellWidth = Math.floor(availableWidth / cols);
+    
+    // Use the smaller dimension to ensure board fits
+    let cellSize = Math.min(maxCellHeight, maxCellWidth);
+    
+    // Clamp between reasonable bounds (20px min, 60px max)
+    cellSize = Math.max(20, Math.min(60, cellSize));
+    
+    // Calculate font size proportionally (roughly 40-50% of cell size)
+    const fontSize = Math.max(10, Math.floor(cellSize * 0.45));
+    
+    // Apply via CSS custom properties
+    document.documentElement.style.setProperty('--cell-size', `${cellSize}px`);
+    document.documentElement.style.setProperty('--cell-font-size', `${fontSize}px`);
   }
 
   private setupPause(): void {
@@ -465,6 +578,9 @@ export class GameUI {
   private selectLevel(level: string): void {
     this.currentLevel = level;
     
+    // Reset rotate dismissed when changing difficulty
+    this.rotateDismissed = false;
+    
     // Update active button
     document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(level)?.classList.add('active');
@@ -541,6 +657,12 @@ export class GameUI {
 
       this.boardElement.appendChild(rowElement);
     }
+    
+    // Auto-scale board for mobile after render
+    requestAnimationFrame(() => {
+      this.autoScaleBoard();
+      this.checkRotateModal();
+    });
   }
 
   private createCellElement(cell: Cell): HTMLElement {
@@ -556,6 +678,12 @@ export class GameUI {
       e.preventDefault();
       this.handleRightClick(cell.row, cell.col);
     });
+
+    // Touch support: long press to flag
+    element.addEventListener('touchstart', (e) => this.handleTouchStart(e, cell.row, cell.col), { passive: false });
+    element.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+    element.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+    element.addEventListener('touchcancel', () => this.cancelTouch());
 
     return element;
   }
@@ -633,6 +761,53 @@ export class GameUI {
     this.updateMineCount();
     this.checkGameEnd();
     this.autoSave();
+  }
+
+  // Touch handling for mobile long press to flag
+  private handleTouchStart(e: TouchEvent, row: number, col: number): void {
+    const touch = e.touches[0];
+    this.touchStartPos = { x: touch.clientX, y: touch.clientY };
+    
+    // Set timer for long press (500ms)
+    this.touchTimer = window.setTimeout(() => {
+      this.handleRightClick(row, col);
+      this.touchTimer = null;
+      // Prevent the click event after long press
+      e.preventDefault();
+    }, 500);
+  }
+
+  private handleTouchEnd(e: TouchEvent): void {
+    if (this.touchTimer) {
+      // Short tap - let click handler deal with it
+      clearTimeout(this.touchTimer);
+      this.touchTimer = null;
+    } else {
+      // Long press was triggered, prevent click
+      e.preventDefault();
+    }
+    this.touchStartPos = null;
+  }
+
+  private handleTouchMove(e: TouchEvent): void {
+    if (!this.touchStartPos || !this.touchTimer) return;
+    
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - this.touchStartPos.x);
+    const deltaY = Math.abs(touch.clientY - this.touchStartPos.y);
+    
+    // Cancel long press if finger moved too much (10px threshold)
+    if (deltaX > 10 || deltaY > 10) {
+      this.cancelTouch();
+    }
+  }
+
+  private cancelTouch(): void {
+    if (this.touchTimer) {
+      clearTimeout(this.touchTimer);
+      this.touchTimer = null;
+    }
+    this.touchStartPos = null;
   }
 
   private autoSave(): void {
